@@ -6,3 +6,8 @@ Implemented features
 -readbyte
 
 http://www.saleae.com/logic/
+
+
+TODO:
+Look at using the "new libusb" to allow better control and a-synchronous operations
+http://libusb.wiki.sourceforge.net/Libusb1.0
