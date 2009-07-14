@@ -1,0 +1,13 @@
+/* Firmware for the saleae logic analyzer */
+/* Geneated in the firmware directory */
+
+#define INDEX_CMD_REQUEST 0
+#define INDEX_CMD_VALUE 1
+#define INDEX_PAYLOAD_SIZE 2
+
+int slogic_firm_cmds[] ={
+include(`firm_cmds.inc')
+};
+char slogic_firm_data[]= {
+include(`firm_data.inc')
+};
