@@ -1,7 +1,9 @@
 #ifndef __SLOGIC_H__
 #define __SLOGIC_H__
 
+#include <malloc.h>
 #include "firmware.h"
+
 
 /* sleep time table */
 #define DELAY_FOR_24000000   1
@@ -15,7 +17,7 @@
 #define DELAY_FOR_250000   191
 #define DELAY_FOR_200000   239
 
-//#define BUFFER_SIZE 0x4000	/* 4K */
+//#define BUFFER_SIZE 0x4000    /* 4K */
 #define BUFFER_SIZE 512
 
 /**
@@ -23,15 +25,15 @@
  **/
 struct slogic_handle {
     /* pointer to the usb handle */
-    usb_dev_handle *device_handle;
-    /* the timeout given to usb commands 100 should really be enough */
-    int usb_timeout_millis;
+    libusb_device_handle *device_handle;
+
+    libusb_context *context;
 };
 
 void slogic_upload_firmware(struct slogic_handle *handle)
 {
     int counter;
-    int *current;
+    unsigned int *current;
     int data_start;
     int cmd_size = 3;
     int cmd_count =
@@ -40,13 +42,17 @@ void slogic_upload_firmware(struct slogic_handle *handle)
     current = slogic_firm_cmds;
     data_start = 0;
     for (counter = 0; counter < cmd_count; counter++) {
-	//int usb_control_msg(usb_dev_handle *dev, int requesttype, int request,
-	//        int value, int index, char *bytes, int size, int timeout);
-	usb_control_msg(handle->device_handle, 0x40, 0Xa0,
-			current[INDEX_CMD_REQUEST],
-			current[INDEX_CMD_VALUE],
-			&slogic_firm_data[data_start],
-			current[INDEX_PAYLOAD_SIZE], 500);
+
+	/* int libusb_control_transfer(libusb_device_handle *dev_handle,
+	 * int8_t request_type, uint8_t request, uint16_t value, uint16_t index,
+	 * unsigned char *data, uint16_t length, unsigned int timeout); 
+	 */
+
+	libusb_control_transfer(handle->device_handle, 0x40, 0XA0,
+				current[INDEX_CMD_REQUEST],
+				current[INDEX_CMD_VALUE],
+				&slogic_firm_data[data_start],
+				current[INDEX_PAYLOAD_SIZE], 500);
 	data_start += current[2];
 	current += cmd_size;
     }
@@ -58,8 +64,11 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 {
     /* just try to perform a normal read, if this fails we assume the firmware is not uploaded */
     int count;
-    char out_byte = 0x05;
-    count = usb_bulk_write(handle->device_handle, 0x01, &out_byte, 1, 100);
+    unsigned char out_byte = 0x05;
+    int transferred;
+    count =
+	libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
+			     &transferred, 100);
     if (count < 0) {
 	return 0;
     }
@@ -69,11 +78,16 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 char slogic_readbyte(struct slogic_handle *handle)
 {
     int count;
-    char out_byte = 0x05;
-    char in_byte = 0x00;
-    count = usb_bulk_write(handle->device_handle, 0x01, &out_byte, 1, 100);
+    unsigned char out_byte = 0x05;
+    unsigned char in_byte = 0x00;
+    int transferred;
+    count =
+	libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
+			     &transferred, 100);
     assert(count > 0);
-    count = usb_bulk_read(handle->device_handle, 0x01, &in_byte, 1, 100);
+    count =
+	libusb_bulk_transfer(handle->device_handle, 0x01, &in_byte, 1,
+			     &transferred, 100);
     //assert(count > 0 );
     return in_byte;
 }
@@ -89,9 +103,10 @@ void slogic_read_samples(struct slogic_handle *handle)
 {
     int counter;
     int count;
+    int transferred;
 
-    char *buffer;
-    char cmd[2];
+    unsigned char *buffer;
+    unsigned char cmd[2];
 
     buffer = malloc(BUFFER_SIZE);
     assert(buffer);
@@ -101,10 +116,11 @@ void slogic_read_samples(struct slogic_handle *handle)
 //    cmd[1] = DELAY_FOR_8000000;
     for (counter = 0; counter < 2000; counter++) {
 	count =
-	    usb_bulk_read(handle->device_handle, 0x02, buffer, BUFFER_SIZE,
-			  1);
+	    libusb_bulk_transfer(handle->device_handle, 0x02, buffer,
+				 BUFFER_SIZE, &transferred, 1);
 	if (counter == 200) {
-	    usb_bulk_write(handle->device_handle, 0x01, cmd, 2, 1);
+	    libusb_bulk_transfer(handle->device_handle, 0x01, cmd, 2,
+				 &transferred, 1);
 	}
     }
 }

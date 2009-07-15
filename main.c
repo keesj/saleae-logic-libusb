@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include <usb.h>
+#include <libusb.h>
 #include "slogic.h"
 #include "usbutil.h"
 
@@ -16,7 +16,10 @@ int main(int argc, char **argv)
 {
     struct slogic_handle handle;
 
-    handle.device_handle = open_device(USB_VENDOR_ID, USB_PRODUCT_ID);
+    libusb_init(&handle.context);
+
+    handle.device_handle =
+	open_device(handle.context, USB_VENDOR_ID, USB_PRODUCT_ID);
     if (!handle.device_handle) {
 	fprintf(stderr, "Failed to find the device\n");
 	return -1;
@@ -25,14 +28,17 @@ int main(int argc, char **argv)
     if (!slogic_is_firmware_uploaded(&handle)) {
 	printf("Uploading firmware restart program\n");
 	slogic_upload_firmware(&handle);
-	usb_close(handle.device_handle);
+	libusb_close(handle.device_handle);
+	libusb_exit(handle.context);
 	return -1;
     }
     /* apparently one need to at least read once before the driver continues */
     slogic_readbyte(&handle);
 
-    //slogic_read_samples(&handle);
+    slogic_read_samples(&handle);
     printf("0x%2x\n", slogic_readbyte(&handle));
-    usb_close(handle.device_handle);
+
+    libusb_close(handle.device_handle);
+    libusb_exit(handle.context);
     return 0;
 }
