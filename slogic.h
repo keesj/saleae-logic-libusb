@@ -26,7 +26,6 @@
 struct slogic_handle {
     /* pointer to the usb handle */
     libusb_device_handle *device_handle;
-
     libusb_context *context;
 };
 
@@ -42,12 +41,10 @@ void slogic_upload_firmware(struct slogic_handle *handle)
     current = slogic_firm_cmds;
     data_start = 0;
     for (counter = 0; counter < cmd_count; counter++) {
-
 	/* int libusb_control_transfer(libusb_device_handle *dev_handle,
 	 * int8_t request_type, uint8_t request, uint16_t value, uint16_t index,
 	 * unsigned char *data, uint16_t length, unsigned int timeout); 
 	 */
-
 	libusb_control_transfer(handle->device_handle, 0x40, 0XA0,
 				current[INDEX_CMD_REQUEST],
 				current[INDEX_CMD_VALUE],
@@ -77,16 +74,16 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 
 char slogic_readbyte(struct slogic_handle *handle)
 {
-    int count;
+    int ret;
     unsigned char out_byte = 0x05;
     unsigned char in_byte = 0x00;
     int transferred;
-    count =
+    ret =
 	libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
 			     &transferred, 100);
-    assert(count > 0);
-    count =
-	libusb_bulk_transfer(handle->device_handle, 0x01, &in_byte, 1,
+    assert(ret ==  0);
+    ret =
+	libusb_bulk_transfer(handle->device_handle, 0x01 | LIBUSB_ENDPOINT_IN , &in_byte, 1,
 			     &transferred, 100);
     //assert(count > 0 );
     return in_byte;
@@ -116,7 +113,7 @@ void slogic_read_samples(struct slogic_handle *handle)
 //    cmd[1] = DELAY_FOR_8000000;
     for (counter = 0; counter < 2000; counter++) {
 	count =
-	    libusb_bulk_transfer(handle->device_handle, 0x02, buffer,
+	    libusb_bulk_transfer(handle->device_handle, 0x02 | LIBUSB_ENDPOINT_IN , buffer,
 				 BUFFER_SIZE, &transferred, 1);
 	if (counter == 200) {
 	    libusb_bulk_transfer(handle->device_handle, 0x01, cmd, 2,
