@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     slogic_readbyte(&handle);
 
     slogic_read_samples(&handle);
-    printf("0x%2x\n", slogic_readbyte(&handle));
+    //printf("0x%2x\n", slogic_readbyte(&handle));
 
     libusb_close(handle.device_handle);
     libusb_exit(handle.context);

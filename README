@@ -1,5 +1,4 @@
-The code here represents a libusb based implementation to access the saleae logic
-analyzer. 
+The code here represents a libusb based implementation to access the saleae logic analyzer. 
 
 Implemented features
 -firmware upload

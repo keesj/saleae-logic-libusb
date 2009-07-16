@@ -81,45 +81,102 @@ char slogic_readbyte(struct slogic_handle *handle)
     ret =
 	libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
 			     &transferred, 100);
-    assert(ret ==  0);
+    assert(ret == 0);
     ret =
-	libusb_bulk_transfer(handle->device_handle, 0x01 | LIBUSB_ENDPOINT_IN , &in_byte, 1,
+	libusb_bulk_transfer(handle->device_handle,
+			     0x01 | LIBUSB_ENDPOINT_IN, &in_byte, 1,
 			     &transferred, 100);
     //assert(count > 0 );
     return in_byte;
 }
 
+
+
+struct stransfer {
+    struct libusb_transfer *transfer;
+    int seq;
+    struct slogic_handle *shandle;
+};
+
+#define TRANSFER_BUFFERS 10
+static int tcounter = 0;
+static struct stransfer transfers[TRANSFER_BUFFERS];
+
+void slogic_read_samples_callback_start_log(struct libusb_transfer
+					    *transfer)
+{
+    printf("start log\n");
+    libusb_free_transfer(transfer);
+    /* free data? */
+};
+
+void slogic_read_samples_callback(struct libusb_transfer *transfer)
+{
+    struct stransfer *stransfer = transfer->user_data;
+    assert(stransfer);
+    if (tcounter == 200) {
+	struct libusb_transfer *transfer;
+	unsigned char cmd[2];
+	cmd[0] = 0x01;
+	//cmd[1] = DELAY_FOR_4000000;
+	cmd[1] = DELAY_FOR_200000;
+	transfer = libusb_alloc_transfer(0 /* we use bulk */ );
+	assert(transfer);
+	libusb_fill_bulk_transfer(transfer,
+				  stransfer->shandle->device_handle, 0x01,
+				  cmd, 2,
+				  slogic_read_samples_callback_start_log,
+				  NULL, 10);
+	libusb_submit_transfer(transfer);
+    }
+#if 0
+    if (tcounter < 2000) {
+#endif
+	stransfer->seq = tcounter++;
+	libusb_submit_transfer(stransfer->transfer);
+#if 0
+    } else {
+	libusb_free_transfer(transfer);
+	/* free data? */
+    }
+#endif
+
+}
+
+
 /*
  * slogic_read_samples reads 1800 samples using the streaming 
  * protocol. This methods is really a proof of concept as the
- * data is not exported because of the following reasons
- * -a libusb 0.x limitation we can not queue request upfront
- * -a libusb 0.x limitation we can not know the size of the tranfered data
+ * data is not exported yet
  */
 void slogic_read_samples(struct slogic_handle *handle)
 {
-    int counter;
-    int count;
-    int transferred;
-
+    struct libusb_transfer *transfer;
     unsigned char *buffer;
-    unsigned char cmd[2];
+    int counter;
 
-    buffer = malloc(BUFFER_SIZE);
-    assert(buffer);
+    for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
+	buffer = malloc(BUFFER_SIZE);
+	assert(buffer);
 
-    cmd[0] = 0x01;
-    cmd[1] = DELAY_FOR_250000;
-//    cmd[1] = DELAY_FOR_8000000;
-    for (counter = 0; counter < 2000; counter++) {
-	count =
-	    libusb_bulk_transfer(handle->device_handle, 0x02 | LIBUSB_ENDPOINT_IN , buffer,
-				 BUFFER_SIZE, &transferred, 1);
-	if (counter == 200) {
-	    libusb_bulk_transfer(handle->device_handle, 0x01, cmd, 2,
-				 &transferred, 1);
-	}
+	transfer = libusb_alloc_transfer(0 /* we use bulk */ );
+	assert(transfer);
+	libusb_fill_bulk_transfer(transfer, handle->device_handle,
+				  0x02 | LIBUSB_ENDPOINT_IN, buffer,
+				  BUFFER_SIZE,
+				  slogic_read_samples_callback,
+				  &transfers[counter], 1);
+	transfers[counter].transfer = transfer;
+	transfers[counter].shandle = handle;
+    }
+
+    for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
+	transfers[counter].seq = tcounter++;
+	libusb_submit_transfer(transfers[counter].transfer);
+    }
+
+    while (tcounter < 20000 - TRANSFER_BUFFERS) {
+	libusb_handle_events(handle->context);
     }
 }
-
 #endif
