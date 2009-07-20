@@ -17,7 +17,7 @@
 #define DELAY_FOR_250000   191
 #define DELAY_FOR_200000   239
 
-#define BUFFER_SIZE 0x4000    /* 4K */
+#define BUFFER_SIZE 0x4000	/* 4K */
 
 /**
  * Contract between the main program and the utility library
@@ -184,6 +184,6 @@ void slogic_read_samples(struct slogic_handle *handle)
     while (tcounter < 20000 - TRANSFER_BUFFERS) {
 	libusb_handle_events(handle->context);
     }
-    printf("Total number of Samples red is %i\n",sample_counter);
+    printf("Total number of Samples red is %i\n", sample_counter);
 }
 #endif
