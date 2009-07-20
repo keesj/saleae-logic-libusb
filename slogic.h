@@ -17,8 +17,7 @@
 #define DELAY_FOR_250000   191
 #define DELAY_FOR_200000   239
 
-//#define BUFFER_SIZE 0x4000    /* 4K */
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 0x4000    /* 4K */
 
 /**
  * Contract between the main program and the utility library
@@ -49,7 +48,7 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 				current[INDEX_CMD_REQUEST],
 				current[INDEX_CMD_VALUE],
 				&slogic_firm_data[data_start],
-				current[INDEX_PAYLOAD_SIZE], 500);
+				current[INDEX_PAYLOAD_SIZE], 4);
 	data_start += current[2];
 	current += cmd_size;
     }
@@ -98,9 +97,12 @@ struct stransfer {
     struct slogic_handle *shandle;
 };
 
-#define TRANSFER_BUFFERS 10
+#define TRANSFER_BUFFERS 4
 static int tcounter = 0;
 static struct stransfer transfers[TRANSFER_BUFFERS];
+
+/* keep track of the amount of transfeered data */
+static int sample_counter = 0;
 
 void slogic_read_samples_callback_start_log(struct libusb_transfer
 					    *transfer)
@@ -118,8 +120,10 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	struct libusb_transfer *transfer;
 	unsigned char cmd[2];
 	cmd[0] = 0x01;
-	//cmd[1] = DELAY_FOR_4000000;
-	cmd[1] = DELAY_FOR_200000;
+	//cmd[1] = DELAY_FOR_12000000;
+	//cmd[1] = DELAY_FOR_8000000;
+	cmd[1] = DELAY_FOR_4000000;
+	//cmd[1] = DELAY_FOR_200000;
 	transfer = libusb_alloc_transfer(0 /* we use bulk */ );
 	assert(transfer);
 	libusb_fill_bulk_transfer(transfer,
@@ -129,6 +133,8 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 				  NULL, 10);
 	libusb_submit_transfer(transfer);
     }
+
+    sample_counter += transfer->actual_length;
 #if 0
     if (tcounter < 2000) {
 #endif
@@ -165,7 +171,7 @@ void slogic_read_samples(struct slogic_handle *handle)
 				  0x02 | LIBUSB_ENDPOINT_IN, buffer,
 				  BUFFER_SIZE,
 				  slogic_read_samples_callback,
-				  &transfers[counter], 1);
+				  &transfers[counter], 4);
 	transfers[counter].transfer = transfer;
 	transfers[counter].shandle = handle;
     }
@@ -178,5 +184,6 @@ void slogic_read_samples(struct slogic_handle *handle)
     while (tcounter < 20000 - TRANSFER_BUFFERS) {
 	libusb_handle_events(handle->context);
     }
+    printf("Total number of Samples red is %i\n",sample_counter);
 }
 #endif
