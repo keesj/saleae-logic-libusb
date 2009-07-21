@@ -1,0 +1,53 @@
+The Saleae Logic's main component is a cypress CY7C68013A
+http://www.cypress.com/?rID=14181
+
+
+
+CY7C68013A, CY7C68014A, CY7C68015A, CY7C68016A
+
+Last Updated: 07/15/2009
+
+EZ-USB FX2LP™ USB Microcontroller High Speed USB Peripheral Controller
+
+Features (CY7C68013A/14A/15A/16A)
+
+    * USB 2.0 USB IF High Speed Certified (TID # 40460272)
+    * Single Chip Integrated USB 2.0 Transceiver, Smart SIE, and Enhanced 8051 Microprocessor
+    * Fit, Form, and Function Compatible with the FX2
+          o Pin compatible
+          o Object code compatible
+          o Functionally Compatible (FX2LP is a superset)
+    * Ultra Low Power: ICC No More than 85 mA in any Mode
+          o Ideal for bus and battery powered applications 
+    * For more, see pdf
+
+Functional Overview
+
+USB Signaling Speed
+
+FX2LP operates at two of the three rates defined in the USB Specification Revision 2.0, dated April 27, 2000:
+
+    * Full speed, with a signaling bit rate of 12 Mbps
+    * High speed, with a signaling bit rate of 480 Mbps. 
+
+FX2LP does not support the low speed signaling mode of 1.5 Mbps.      More...
+
+
+Searching for this arch we found the following linux tools
+keesj@ijssijs:~/projects/saleae-logic-libusb/docs$ apt-cache search  8051
+as31 - Intel 8031/8051 assembler
+cycfx2prog - Cypress EZ-USB FX2 (LP) programmer
+dis51 - Disassembler for 8051 code in Intel Hex format
+emu8051 - Emulator and simulator for 8051 microcontrollers
+s51dude - In-System Programmer for 8051 MCUs using usbtiny
+
+
+
+>Tried uploading some sofrware to it
+keesj@ijssijs:~/projects/saleae-logic-libusb/docs$ cycfx2prog -d=001.003 prg:/tmp/hid/ezcombo/ezcombo.hex run
+Using ID 0925:3881 on 001.010.
+Putting 8051 into reset.
+Programming 8051 using "/tmp/hid/ezcombo/ezcombo.hex".
+Putting 8051 out of reset.
+
+>the fun thing is that I give the wrong  device but it can find it
