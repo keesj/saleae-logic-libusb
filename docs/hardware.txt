@@ -33,21 +33,20 @@ FX2LP operates at two of the three rates defined in the USB Specification Revisi
 FX2LP does not support the low speed signaling mode of 1.5 Mbps.      More...
 
 
-Searching for this arch we found the following linux tools
-keesj@ijssijs:~/projects/saleae-logic-libusb/docs$ apt-cache search  8051
-as31 - Intel 8031/8051 assembler
-cycfx2prog - Cypress EZ-USB FX2 (LP) programmer
-dis51 - Disassembler for 8051 code in Intel Hex format
-emu8051 - Emulator and simulator for 8051 microcontrollers
-s51dude - In-System Programmer for 8051 MCUs using usbtiny
 
+This hardware can be programmed using open source tools that can be downloaded from here
+http://volodya-project.sourceforge.net/fx2_programmer.php
 
+the example here http://volodya-project.cvs.sourceforge.net/viewvc/volodya-project/8051/ex2/
+works after modifying the build shell script to use the logic analyzer's bus
 
->Tried uploading some sofrware to it
-keesj@ijssijs:~/projects/saleae-logic-libusb/docs$ cycfx2prog -d=001.003 prg:/tmp/hid/ezcombo/ezcombo.hex run
-Using ID 0925:3881 on 001.010.
-Putting 8051 into reset.
-Programming 8051 using "/tmp/hid/ezcombo/ezcombo.hex".
-Putting 8051 out of reset.
+The on-board firmware allows to set output values see the LogicConsole.
 
->the fun thing is that I give the wrong  device but it can find it
+Some thing that might be nice to try:
+Get this code running:
+http://www.ixo.de/info/usb_jtag/
+
+The 8 outputs of the logic anzlyzer are attached tot portB
+
+Some other code that works is the advanced examples located here (creating a ftdi serial emulator)
+http://www.triplespark.net/elec/periph/USB-FX2/software/advanced_examples.html#convert_serial
