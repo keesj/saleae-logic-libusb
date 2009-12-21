@@ -18,6 +18,8 @@ int main(int argc, char **argv)
 
     libusb_init(&handle.context);
 
+    libusb_set_debug(handle.context, 3);
+
     handle.device_handle =
 	open_device(handle.context, USB_VENDOR_ID, USB_PRODUCT_ID);
     if (!handle.device_handle) {

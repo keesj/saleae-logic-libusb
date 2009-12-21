@@ -1,4 +1,5 @@
 #include "slogic.h"
+#include "usbutil.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -57,6 +58,9 @@ char slogic_readbyte(struct slogic_handle *handle)
     ret =
 	libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
 			     &transferred, 100);
+    if(ret) {
+        fprintf(stderr, "libusb_bulk_transfer: %s\n", usbutil_error_to_string(ret));
+    }
     assert(ret == 0);
     ret =
 	libusb_bulk_transfer(handle->device_handle,
