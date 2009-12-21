@@ -1,3 +1,5 @@
+sinclude Makefile.local
+
 CFLAGS ?= -g
 CFLAGS += -Wall
 
@@ -6,10 +8,13 @@ PKGS = libusb-1.0
 CFLAGS += `$(PKG_CONFIG) --cflags $(PKGS)`
 LDLIBS += `$(PKG_CONFIG) --libs $(PKGS)`
 
-all:run
+all: main
 
-run:main
+run: main
 	./main
+
+main: main.o slogic.o firmware.o
+
 firmware.h:
 	$(MAKE) -C firmware
 
@@ -20,5 +25,5 @@ indent_kr:
 	indent -kr *.c *.h
 
 sinclude .deps
-.deps: *.c
+.deps: $(wildcard *.c) $(wildcard *.h)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c > .deps
