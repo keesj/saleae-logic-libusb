@@ -1,6 +1,7 @@
 *.o
 .deps
 *.swp
+*~
 Makefile.local
 
 /main
