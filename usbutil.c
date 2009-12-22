@@ -1,3 +1,4 @@
+// vim: ts=8:noexpandtab
 #include "usbutil.h"
 
 #include <stdio.h>
@@ -76,6 +77,21 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
     }
 
     libusb_free_device_list(list, 1);
+
+    struct libusb_config_descriptor* config;
+    err = libusb_get_active_config_descriptor(found, &config);
+    fprintf(stderr, "libusb_get_active_config_descriptor: %s\n", usbutil_error_to_string(err));
+    fprintf(stderr, "Descriptor:\n");
+    fprintf(stderr, "bConfigurationValue: %d\n", config->bConfigurationValue);
+    fprintf(stderr, "bNumInterfaces: %d\n", config->bNumInterfaces);
+    /*
+    struct libusb_interface* interface = config->interface;
+    for(i = 0; i < config->bNumInterfaces; i++) {
+	fprintf(stderr, " %d: altsetting=%d, num_altsetting=%d\n", i, interface->altsetting, interface->num_altsetting);
+	interface++;
+    }
+    */
+    fprintf(stderr, "\n");
 
     if ((err = claim_device(device_handle, 0)) != 0) {
         fprintf(stderr, "Failed to claim the usb interface: %s\n", usbutil_error_to_string(err));
