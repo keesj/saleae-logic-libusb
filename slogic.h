@@ -18,8 +18,6 @@
 
 #define BUFFER_SIZE 0x4000	/* 4K */
 
-#define TRANSFER_BUFFERS 4
-
 /**
  * Contract between the main program and the utility library
  **/
@@ -34,24 +32,13 @@ void slogic_upload_firmware(struct slogic_handle *handle);
 /* return 1 if the firmware is uploaded 0 if not */
 int slogic_is_firmware_uploaded(struct slogic_handle *handle);
 
-int slogic_readbyte(struct slogic_handle *handle, unsigned char* out);
-
-struct stransfer {
-	struct libusb_transfer *transfer;
-	int seq;
-	struct slogic_handle *shandle;
-};
-
-void slogic_read_samples_callback_start_log(struct libusb_transfer
-					    *transfer);
-
-void slogic_read_samples_callback(struct libusb_transfer *transfer);
+int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
 
 /*
  * slogic_read_samples reads 1800 samples using the streaming 
  * protocol. This methods is really a proof of concept as the
  * data is not exported yet
  */
-void slogic_read_samples(struct slogic_handle *handle);
+int slogic_read_samples(struct slogic_handle *handle);
 
 #endif

@@ -3,11 +3,9 @@
 
 #include <stdio.h>
 
-void usbutil_dump_device_descriptor(FILE * file,
-				    struct libusb_device_descriptor
+void usbutil_dump_device_descriptor(FILE * file, struct libusb_device_descriptor
 				    *device_descriptor);
-void usbutil_dump_config_descriptor(FILE * file,
-				    struct libusb_config_descriptor
+void usbutil_dump_config_descriptor(FILE * file, struct libusb_config_descriptor
 				    *config_descriptor);
 
 /* This method looks if the kernel already has a driver attached
@@ -78,8 +76,9 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 	for (i = 0; i < cnt; i++) {
 		libusb_device *device = list[i];
 		err = libusb_get_device_descriptor(device, &descriptor);
-		if(err) {
-			fprintf(stderr, "libusb_get_device_descriptor: %s\n", usbutil_error_to_string(err));
+		if (err) {
+			fprintf(stderr, "libusb_get_device_descriptor: %s\n",
+				usbutil_error_to_string(err));
 			libusb_free_device_list(list, 1);
 			return NULL;
 		}
@@ -120,14 +119,18 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 			usbutil_error_to_string(err));
 		return NULL;
 	}
-	fprintf(stderr, "Active configuration:%d\n", config_descriptor->bConfigurationValue);
+	fprintf(stderr, "Active configuration:%d\n",
+		config_descriptor->bConfigurationValue);
 	libusb_free_config_descriptor(config_descriptor);
 
-	fprintf(stderr, "Available configurations (%d):\n", descriptor.bNumConfigurations);
-	for(i = 0; i < descriptor.bNumConfigurations; i++) {
-		err = libusb_get_config_descriptor(found, i, &config_descriptor);
+	fprintf(stderr, "Available configurations (%d):\n",
+		descriptor.bNumConfigurations);
+	for (i = 0; i < descriptor.bNumConfigurations; i++) {
+		err =
+		    libusb_get_config_descriptor(found, i, &config_descriptor);
 		if (err) {
-			fprintf(stderr, "libusb_get_config_descriptor: %s\n", usbutil_error_to_string(err));
+			fprintf(stderr, "libusb_get_config_descriptor: %s\n",
+				usbutil_error_to_string(err));
 			return NULL;
 		}
 
@@ -138,8 +141,7 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 	return device_handle;
 }
 
-static void dump_endpoint_descriptor(FILE * file, int i,
-				     const struct libusb_endpoint_descriptor
+static void dump_endpoint_descriptor(FILE * file, int i, const struct libusb_endpoint_descriptor
 				     *endpoint_descriptor)
 {
 	char *direction =
@@ -147,12 +149,17 @@ static void dump_endpoint_descriptor(FILE * file, int i,
 	      0x80) == LIBUSB_ENDPOINT_IN) ? "in" : "out";
 
 	fprintf(file, "     Endpoint #%d\n", i);
-	fprintf(file, "      Address: %d, direction=%s\n", endpoint_descriptor->bEndpointAddress & 0x0f, direction);
-	fprintf(file, "      Attributes: %02x\n", endpoint_descriptor->bmAttributes);
-	fprintf(file, "      Max packet size: %u\n", endpoint_descriptor->wMaxPacketSize);
-	fprintf(file, "      Poll interval: %d\n", endpoint_descriptor->bInterval);
+	fprintf(file, "      Address: %d, direction=%s\n",
+		endpoint_descriptor->bEndpointAddress & 0x0f, direction);
+	fprintf(file, "      Attributes: %02x\n",
+		endpoint_descriptor->bmAttributes);
+	fprintf(file, "      Max packet size: %u\n",
+		endpoint_descriptor->wMaxPacketSize);
+	fprintf(file, "      Poll interval: %d\n",
+		endpoint_descriptor->bInterval);
 	fprintf(file, "      Refresh: %d\n", endpoint_descriptor->bRefresh);
-	fprintf(file, "      Sync address: %d\n", endpoint_descriptor->bSynchAddress);
+	fprintf(file, "      Sync address: %d\n",
+		endpoint_descriptor->bSynchAddress);
 }
 
 static void dump_interface(FILE * file, int i,
@@ -202,7 +209,9 @@ void usbutil_dump_device_descriptor(FILE * file, struct libusb_device_descriptor
 {
 	// TODO: Decode bytes to strings
 	fprintf(file, "Device descriptor:\n");
-	fprintf(file, " Class/Sub-class: %04x/%04x\n", device_descriptor->bDeviceClass, device_descriptor->bDeviceSubClass);
+	fprintf(file, " Class/Sub-class: %04x/%04x\n",
+		device_descriptor->bDeviceClass,
+		device_descriptor->bDeviceSubClass);
 	fprintf(file, " Protocol: %d\n", device_descriptor->bDeviceProtocol);
 	fprintf(file, " Vendor id / product id: %04x / %04x\n",
 		device_descriptor->idVendor, device_descriptor->idProduct);

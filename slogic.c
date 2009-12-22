@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <stdio.h>
 
+#define TRANSFER_BUFFERS 4
+
 // EP1 OUT
 #define COMMAND_OUT_ENDPOINT 0x01
 // EP1 IN
@@ -51,20 +53,21 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 	unsigned char out_byte = 0x05;
 	int transferred;
 	int ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &out_byte, 1,
+	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
+				 &out_byte, 1,
 				 &transferred, 100);
-	return ret == 0;		/* probably the firmware is uploaded */
+	return ret == 0;	/* probably the firmware is uploaded */
 }
 
-int slogic_readbyte(struct slogic_handle *handle, unsigned char* out)
+int slogic_readbyte(struct slogic_handle *handle, unsigned char *out)
 {
 	int ret;
 	unsigned char command = 0x05;
 	int transferred;
 
 	ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &command, 1,
-				 &transferred, 100);
+	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
+				 &command, 1, &transferred, 100);
 	if (ret) {
 		fprintf(stderr, "libusb_bulk_transfer (out): %s\n",
 			usbutil_error_to_string(ret));
@@ -84,6 +87,13 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char* out)
 }
 
 static int tcounter = 0;
+
+struct stransfer {
+	struct libusb_transfer *transfer;
+	int seq;
+	struct slogic_handle *shandle;
+};
+
 static struct stransfer transfers[TRANSFER_BUFFERS];
 
 /* keep track of the amount of transfeered data */
@@ -100,6 +110,9 @@ void slogic_read_samples_callback_start_log(struct libusb_transfer
 void slogic_read_samples_callback(struct libusb_transfer *transfer)
 {
 	struct stransfer *stransfer = transfer->user_data;
+	int ret;
+
+#if 0
 	assert(stransfer);
 	if (tcounter == 200) {
 		struct libusb_transfer *transfer;
@@ -109,22 +122,35 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 		//cmd[1] = DELAY_FOR_8000000;
 		cmd[1] = DELAY_FOR_4000000;
 		//cmd[1] = DELAY_FOR_200000;
-		transfer = libusb_alloc_transfer(0 /* we use bulk */ );
+		transfer = libusb_alloc_transfer(0);	// 0 == bulk transfer
 		assert(transfer);
 		libusb_fill_bulk_transfer(transfer,
 					  stransfer->shandle->device_handle,
 					  0x01, cmd, 2,
 					  slogic_read_samples_callback_start_log,
 					  NULL, 10);
-		libusb_submit_transfer(transfer);
+		ret = libusb_submit_transfer(transfer);
+		if (ret) {
+			fprintf(stderr, "libusb_submit_transfer: %s\n",
+				usbutil_error_to_string(ret));
+			return;
+		}
 	}
+#endif
 
 	sample_counter += transfer->actual_length;
+	printf("tcounter = %d, sample_counter = %d\n", tcounter,
+	       sample_counter);
 #if 0
 	if (tcounter < 2000) {
 #endif
 		stransfer->seq = tcounter++;
-		libusb_submit_transfer(stransfer->transfer);
+		ret = libusb_submit_transfer(stransfer->transfer);
+		if (ret) {
+			fprintf(stderr, "libusb_submit_transfer: %s\n",
+				usbutil_error_to_string(ret));
+			return;
+		}
 #if 0
 	} else {
 		libusb_free_transfer(transfer);
@@ -138,12 +164,14 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
  * protocol. This methods is really a proof of concept as the
  * data is not exported yet
  */
-void slogic_read_samples(struct slogic_handle *handle)
+int slogic_read_samples(struct slogic_handle *handle)
 {
 	struct libusb_transfer *transfer;
 	unsigned char *buffer;
 	int counter;
+	int ret;
 
+	// Pre-allocate transfers
 	for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
 		buffer = malloc(BUFFER_SIZE);
 		assert(buffer);
@@ -151,7 +179,7 @@ void slogic_read_samples(struct slogic_handle *handle)
 		transfer = libusb_alloc_transfer(0 /* we use bulk */ );
 		assert(transfer);
 		libusb_fill_bulk_transfer(transfer, handle->device_handle,
-					  0x02 | LIBUSB_ENDPOINT_IN, buffer,
+					  STREAMING_DATA_IN_ENDPOINT, buffer,
 					  BUFFER_SIZE,
 					  slogic_read_samples_callback,
 					  &transfers[counter], 4);
@@ -161,11 +189,38 @@ void slogic_read_samples(struct slogic_handle *handle)
 
 	for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
 		transfers[counter].seq = tcounter++;
-		libusb_submit_transfer(transfers[counter].transfer);
+		ret = libusb_submit_transfer(transfers[counter].transfer);
+		if (ret) {
+			fprintf(stderr, "libusb_submit_transfer: %s\n",
+				usbutil_error_to_string(ret));
+			return ret;
+		}
 	}
 
+	// Switch the logic to streaming read mode
+	unsigned char command[] = { 0x01, DELAY_FOR_200000 };
+	int transferred;
+	ret =
+	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
+				 command, 2, &transferred, 100);
+	if (ret) {
+		fprintf(stderr,
+			"libusb_bulk_transfer (set streaming read mode): %s\n",
+			usbutil_error_to_string(ret));
+		return ret;
+	}
+	assert(transferred == 2);
+
 	while (tcounter < 20000 - TRANSFER_BUFFERS) {
-		libusb_handle_events(handle->context);
+		printf("Processing events...\n");
+		ret = libusb_handle_events(handle->context);
+		if (ret) {
+			fprintf(stderr, "libusb_submit_transfer: %s\n",
+				usbutil_error_to_string(ret));
+			return ret;
+		}
 	}
 	printf("Total number of Samples red is %i\n", sample_counter);
+
+	return 0;
 }
