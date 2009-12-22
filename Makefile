@@ -21,8 +21,9 @@ firmware.h:
 clean:
 	$(MAKE) -C firmware clean
 	rm -rf main .deps $(wildcard *.o)
-indent_kr:
-	indent -kr *.c *.h
+
+indent:
+	Lindent $(wildcard *.c *.h)
 
 sinclude .deps
 .deps: $(wildcard *.c) $(wildcard *.h)

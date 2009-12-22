@@ -8,29 +8,34 @@
  */
 static enum libusb_error claim_device(libusb_device_handle * dev, int interface)
 {
-    enum libusb_error err;
-    if (libusb_kernel_driver_active(dev, interface)) {
-        fprintf(stderr, "A kernel has claimed the interface, detaching it...\n");
-	if ((err = libusb_detach_kernel_driver(dev, interface)) != 0) {
-            fprintf(stderr, "Failed to Disconnected the OS driver: %s\n", usbutil_error_to_string(err));
-            return err;
+	enum libusb_error err;
+	if (libusb_kernel_driver_active(dev, interface)) {
+		fprintf(stderr,
+			"A kernel has claimed the interface, detaching it...\n");
+		if ((err = libusb_detach_kernel_driver(dev, interface)) != 0) {
+			fprintf(stderr,
+				"Failed to Disconnected the OS driver: %s\n",
+				usbutil_error_to_string(err));
+			return err;
+		}
 	}
-    }
 
-    if ((err = libusb_set_configuration(dev, 1))) {
-	fprintf(stderr, "libusb_set_configuration: %s\n", usbutil_error_to_string(err));
-	return err;
-    }
+	if ((err = libusb_set_configuration(dev, 1))) {
+		fprintf(stderr, "libusb_set_configuration: %s\n",
+			usbutil_error_to_string(err));
+		return err;
+	}
 
-    /* claim interface */
-    if ((err = libusb_claim_interface(dev, interface))) {
-	fprintf(stderr, "Claim interface error: %s\n", usbutil_error_to_string(err));
-	return err;
-    }
+	/* claim interface */
+	if ((err = libusb_claim_interface(dev, interface))) {
+		fprintf(stderr, "Claim interface error: %s\n",
+			usbutil_error_to_string(err));
+		return err;
+	}
 
-    libusb_set_interface_alt_setting(dev, interface, 0);
+	libusb_set_interface_alt_setting(dev, interface, 0);
 
-    return LIBUSB_SUCCESS;
+	return LIBUSB_SUCCESS;
 }
 
 /* Iterates over the usb devices on the usb busses and returns a handle to the
@@ -40,98 +45,103 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 				  int product_id)
 {
 
-    // discover devices
-    libusb_device **list;
-    libusb_device *found = NULL;
-    libusb_device_handle *device_handle = NULL;
-    struct libusb_device_descriptor descriptor;
+	// discover devices
+	libusb_device **list;
+	libusb_device *found = NULL;
+	libusb_device_handle *device_handle = NULL;
+	struct libusb_device_descriptor descriptor;
 
-    size_t cnt = libusb_get_device_list(ctx, &list);
-    size_t i = 0;
-    int err = 0;
-    if (cnt < 0) {
-	fprintf(stderr, "Failed to get a list of devices\n");
-	return NULL;
-    }
-
-    for (i = 0; i < cnt; i++) {
-	libusb_device *device = list[i];
-	libusb_get_device_descriptor(device, &descriptor);
-	if ((descriptor.idVendor == vendor_id) &&
-	    (descriptor.idProduct == product_id)) {
-	    found = device;
-	    break;
+	size_t cnt = libusb_get_device_list(ctx, &list);
+	size_t i = 0;
+	int err = 0;
+	if (cnt < 0) {
+		fprintf(stderr, "Failed to get a list of devices\n");
+		return NULL;
 	}
-    }
 
-    if (!found) {
-	fprintf(stderr, "Device not found\n");
-        libusb_free_device_list(list, 1);
-        return NULL;
-    }
+	for (i = 0; i < cnt; i++) {
+		libusb_device *device = list[i];
+		libusb_get_device_descriptor(device, &descriptor);
+		if ((descriptor.idVendor == vendor_id) &&
+		    (descriptor.idProduct == product_id)) {
+			found = device;
+			break;
+		}
+	}
 
-    if ((err = libusb_open(found, &device_handle))) {
-        fprintf(stderr, "Failed OPEN the device: %s\n", usbutil_error_to_string(err));
-        libusb_free_device_list(list, 1);
-        return NULL;
-    }
+	if (!found) {
+		fprintf(stderr, "Device not found\n");
+		libusb_free_device_list(list, 1);
+		return NULL;
+	}
 
-    libusb_free_device_list(list, 1);
+	if ((err = libusb_open(found, &device_handle))) {
+		fprintf(stderr, "Failed OPEN the device: %s\n",
+			usbutil_error_to_string(err));
+		libusb_free_device_list(list, 1);
+		return NULL;
+	}
 
-    struct libusb_config_descriptor* config;
-    err = libusb_get_active_config_descriptor(found, &config);
-    fprintf(stderr, "libusb_get_active_config_descriptor: %s\n", usbutil_error_to_string(err));
-    fprintf(stderr, "Descriptor:\n");
-    fprintf(stderr, "bConfigurationValue: %d\n", config->bConfigurationValue);
-    fprintf(stderr, "bNumInterfaces: %d\n", config->bNumInterfaces);
-    /*
-    struct libusb_interface* interface = config->interface;
-    for(i = 0; i < config->bNumInterfaces; i++) {
-	fprintf(stderr, " %d: altsetting=%d, num_altsetting=%d\n", i, interface->altsetting, interface->num_altsetting);
-	interface++;
-    }
-    */
-    fprintf(stderr, "\n");
+	libusb_free_device_list(list, 1);
 
-    if ((err = claim_device(device_handle, 0)) != 0) {
-        fprintf(stderr, "Failed to claim the usb interface: %s\n", usbutil_error_to_string(err));
-        return NULL;
-    }
+	struct libusb_config_descriptor *config;
+	err = libusb_get_active_config_descriptor(found, &config);
+	fprintf(stderr, "libusb_get_active_config_descriptor: %s\n",
+		usbutil_error_to_string(err));
+	fprintf(stderr, "Descriptor:\n");
+	fprintf(stderr, "bConfigurationValue: %d\n",
+		config->bConfigurationValue);
+	fprintf(stderr, "bNumInterfaces: %d\n", config->bNumInterfaces);
+	/*
+	   struct libusb_interface* interface = config->interface;
+	   for(i = 0; i < config->bNumInterfaces; i++) {
+	   fprintf(stderr, " %d: altsetting=%d, num_altsetting=%d\n", i, interface->altsetting, interface->num_altsetting);
+	   interface++;
+	   }
+	 */
+	fprintf(stderr, "\n");
 
-    return device_handle;
+	if ((err = claim_device(device_handle, 0)) != 0) {
+		fprintf(stderr, "Failed to claim the usb interface: %s\n",
+			usbutil_error_to_string(err));
+		return NULL;
+	}
+
+	return device_handle;
 }
 
-char* usbutil_error_to_string(enum libusb_error error) {
-    switch(error) {
-        case LIBUSB_SUCCESS:
-            return "LIBUSB_SUCCESS";
-        case LIBUSB_ERROR_IO:
-            return "LIBUSB_ERROR_IO";
-        case LIBUSB_ERROR_INVALID_PARAM:
-            return "LIBUSB_ERROR_INVALID_PARAM";
-        case LIBUSB_ERROR_ACCESS:
-            return "LIBUSB_ERROR_ACCESS";
-        case LIBUSB_ERROR_NO_DEVICE:
-            return "LIBUSB_ERROR_NO_DEVICE";
-        case LIBUSB_ERROR_NOT_FOUND:
-            return "LIBUSB_ERROR_NOT_FOUND";
-        case LIBUSB_ERROR_BUSY:
-            return "LIBUSB_ERROR_BUSY";
-        case LIBUSB_ERROR_TIMEOUT:
-            return "LIBUSB_ERROR_TIMEOUT";
-        case LIBUSB_ERROR_OVERFLOW:
-            return "LIBUSB_ERROR_OVERFLOW";
-        case LIBUSB_ERROR_PIPE:
-            return "LIBUSB_ERROR_PIPE";
-        case LIBUSB_ERROR_INTERRUPTED:
-            return "LIBUSB_ERROR_INTERRUPTED";
-        case LIBUSB_ERROR_NO_MEM:
-            return "LIBUSB_ERROR_NO_MEM";
-        case LIBUSB_ERROR_NOT_SUPPORTED:
-            return "LIBUSB_ERROR_NOT_SUPPORTED";
-        case LIBUSB_ERROR_OTHER:
-            return "LIBUSB_ERROR_OTHER";
-        default:
-            return "Unknown error";
-    }
+char *usbutil_error_to_string(enum libusb_error error)
+{
+	switch (error) {
+	case LIBUSB_SUCCESS:
+		return "LIBUSB_SUCCESS";
+	case LIBUSB_ERROR_IO:
+		return "LIBUSB_ERROR_IO";
+	case LIBUSB_ERROR_INVALID_PARAM:
+		return "LIBUSB_ERROR_INVALID_PARAM";
+	case LIBUSB_ERROR_ACCESS:
+		return "LIBUSB_ERROR_ACCESS";
+	case LIBUSB_ERROR_NO_DEVICE:
+		return "LIBUSB_ERROR_NO_DEVICE";
+	case LIBUSB_ERROR_NOT_FOUND:
+		return "LIBUSB_ERROR_NOT_FOUND";
+	case LIBUSB_ERROR_BUSY:
+		return "LIBUSB_ERROR_BUSY";
+	case LIBUSB_ERROR_TIMEOUT:
+		return "LIBUSB_ERROR_TIMEOUT";
+	case LIBUSB_ERROR_OVERFLOW:
+		return "LIBUSB_ERROR_OVERFLOW";
+	case LIBUSB_ERROR_PIPE:
+		return "LIBUSB_ERROR_PIPE";
+	case LIBUSB_ERROR_INTERRUPTED:
+		return "LIBUSB_ERROR_INTERRUPTED";
+	case LIBUSB_ERROR_NO_MEM:
+		return "LIBUSB_ERROR_NO_MEM";
+	case LIBUSB_ERROR_NOT_SUPPORTED:
+		return "LIBUSB_ERROR_NOT_SUPPORTED";
+	case LIBUSB_ERROR_OTHER:
+		return "LIBUSB_ERROR_OTHER";
+	default:
+		return "Unknown error";
+	}
 }

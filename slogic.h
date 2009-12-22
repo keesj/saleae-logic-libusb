@@ -24,9 +24,9 @@
  * Contract between the main program and the utility library
  **/
 struct slogic_handle {
-    /* pointer to the usb handle */
-    libusb_device_handle *device_handle;
-    libusb_context *context;
+	/* pointer to the usb handle */
+	libusb_device_handle *device_handle;
+	libusb_context *context;
 };
 
 void slogic_upload_firmware(struct slogic_handle *handle);
@@ -37,12 +37,13 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle);
 char slogic_readbyte(struct slogic_handle *handle);
 
 struct stransfer {
-    struct libusb_transfer *transfer;
-    int seq;
-    struct slogic_handle *shandle;
+	struct libusb_transfer *transfer;
+	int seq;
+	struct slogic_handle *shandle;
 };
 
-void slogic_read_samples_callback_start_log(struct libusb_transfer *transfer);
+void slogic_read_samples_callback_start_log(struct libusb_transfer
+					    *transfer);
 
 void slogic_read_samples_callback(struct libusb_transfer *transfer);
 
