@@ -7,4 +7,4 @@
 libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 				  int product_id);
 
-char *usbutil_error_to_string(enum libusb_error error);
+const char *usbutil_error_to_string(enum libusb_error error);

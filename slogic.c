@@ -8,6 +8,15 @@
 #include <assert.h>
 #include <stdio.h>
 
+// EP1 OUT
+#define COMMAND_OUT_ENDPOINT 0x01
+// EP1 IN
+#define COMMAND_IN_ENDPOINT 0x81
+// EP2 IN
+#define STREAMING_DATA_IN_ENDPOINT 0x82
+// EP6 OUT
+#define STREAMING_DATA_OUT_ENDPOINT 0x06
+
 void slogic_upload_firmware(struct slogic_handle *handle)
 {
 	int counter;
@@ -39,45 +48,39 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 {
 	/* just try to perform a normal read, if this fails we assume the firmware is not uploaded */
-	int count;
 	unsigned char out_byte = 0x05;
 	int transferred;
-	count =
-	    libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
+	int ret =
+	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &out_byte, 1,
 				 &transferred, 100);
-	if (count < 0) {
-		return 0;
-	}
-	return 1;		/* probably the firmware is uploaded */
+	return ret == 0;		/* probably the firmware is uploaded */
 }
 
-char slogic_readbyte(struct slogic_handle *handle)
+int slogic_readbyte(struct slogic_handle *handle, unsigned char* out)
 {
 	int ret;
-	unsigned char out_byte = 0x05;
-	unsigned char in_byte = 0x00;
+	unsigned char command = 0x05;
 	int transferred;
-	unsigned char endpoint = 0x01;
 
 	ret =
-	    libusb_bulk_transfer(handle->device_handle, endpoint, &out_byte, 1,
+	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &command, 1,
 				 &transferred, 100);
 	if (ret) {
 		fprintf(stderr, "libusb_bulk_transfer (out): %s\n",
 			usbutil_error_to_string(ret));
+		return ret;
 	}
-	/*      */
-	assert(ret == 0);
+
 	ret =
 	    libusb_bulk_transfer(handle->device_handle,
-				 endpoint | LIBUSB_ENDPOINT_IN, &in_byte, 1,
+				 COMMAND_IN_ENDPOINT, out, 1,
 				 &transferred, 100);
 	if (ret) {
 		fprintf(stderr, "libusb_bulk_transfer (in): %s\n",
 			usbutil_error_to_string(ret));
+		return ret;
 	}
-	//assert(count > 0 );
-	return in_byte;
+	return 0;
 }
 
 static int tcounter = 0;

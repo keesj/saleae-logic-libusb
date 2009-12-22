@@ -34,7 +34,7 @@ void slogic_upload_firmware(struct slogic_handle *handle);
 /* return 1 if the firmware is uploaded 0 if not */
 int slogic_is_firmware_uploaded(struct slogic_handle *handle);
 
-char slogic_readbyte(struct slogic_handle *handle);
+int slogic_readbyte(struct slogic_handle *handle, unsigned char* out);
 
 struct stransfer {
 	struct libusb_transfer *transfer;
