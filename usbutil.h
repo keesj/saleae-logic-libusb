@@ -62,14 +62,12 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
     if (found) {
 	err = libusb_open(found, &device_handle);
 	if (err) {
-	    fprintf(stderr, "Failed OPEN the device\n");
+	    fprintf(stderr, "Failed OPEN the device libusb error %i\n",err);
 	    return NULL;
 	}
-	libusb_open(found, &device_handle);
-	/* TODO CHECK RETURN */
 	if (takeover_device(device_handle, 0) < 0) {
 	    fprintf(stderr, "Failed to claim the usb interface\n");
-	    /* TODO RETURN ERROR */
+	    return NULL;
 	}
     } else {
 	fprintf(stderr, "Device not found\n");
