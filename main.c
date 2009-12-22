@@ -1,3 +1,4 @@
+// vim: ts=8:noexpandtab
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>

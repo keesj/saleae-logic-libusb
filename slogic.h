@@ -1,3 +1,4 @@
+// vim: ts=8:noexpandtab
 #ifndef __SLOGIC_H__
 #define __SLOGIC_H__
 
