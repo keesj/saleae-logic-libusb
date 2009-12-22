@@ -1,6 +1,7 @@
 // vim: ts=8:noexpandtab
 #include "slogic.h"
 #include "usbutil.h"
+#include "firmware/firmware.h"
 
 #include <stdlib.h>
 #include <unistd.h>

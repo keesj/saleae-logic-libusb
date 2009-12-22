@@ -5,3 +5,4 @@
 Makefile.local
 
 /main
+firmware/*.inc

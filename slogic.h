@@ -3,7 +3,6 @@
 #define __SLOGIC_H__
 
 #include <libusb.h>
-#include "firmware.h"
 
 /* sleep time table */
 #define DELAY_FOR_24000000   1
