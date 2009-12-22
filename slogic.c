@@ -10,6 +10,8 @@
 
 #define TRANSFER_BUFFERS 4
 
+#define BUFFER_SIZE 0x4000	/* 4K */
+
 // EP1 OUT
 #define COMMAND_OUT_ENDPOINT 0x01
 // EP1 IN
@@ -180,16 +182,18 @@ int slogic_read_samples(struct slogic_handle *handle,
 	int counter;
 	int ret;
 
+	int buffer_size = 1024 * 1024; // BUFFER_SIZE;
+
 	// Pre-allocate transfers
 	for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
-		buffer = malloc(BUFFER_SIZE);
+		buffer = malloc(buffer_size);
 		assert(buffer);
 
 		transfer = libusb_alloc_transfer(0 /* we use bulk */ );
 		assert(transfer);
 		libusb_fill_bulk_transfer(transfer, handle->device_handle,
 					  STREAMING_DATA_IN_ENDPOINT, buffer,
-					  BUFFER_SIZE,
+					  buffer_size,
 					  slogic_read_samples_callback,
 					  &transfers[counter], 4);
 		transfers[counter].transfer = transfer;

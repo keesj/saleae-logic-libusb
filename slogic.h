@@ -18,8 +18,6 @@ enum slogic_sample_rate {
 	sample_rate_200kHz = 239
 };
 
-#define BUFFER_SIZE 0x4000	/* 4K */
-
 /**
  * Contract between the main program and the utility library
  **/

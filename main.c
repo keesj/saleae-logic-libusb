@@ -43,9 +43,7 @@ int main(int argc, char **argv)
 #endif
 
 	printf("slogic_read_samples\n");
-//      slogic_read_samples(&handle, sample_rate_24MHz);
-	// Current performance: 500kHz
-	slogic_read_samples(&handle, sample_rate_500kHz);
+	slogic_read_samples(&handle, sample_rate_24MHz);
 
 	libusb_close(handle.device_handle);
 	libusb_exit(handle.context);
