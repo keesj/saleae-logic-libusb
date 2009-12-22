@@ -66,7 +66,7 @@ char slogic_readbyte(struct slogic_handle *handle)
 		fprintf(stderr, "libusb_bulk_transfer (out): %s\n",
 			usbutil_error_to_string(ret));
 	}
-	/*	*/
+	/*      */
 	assert(ret == 0);
 	ret =
 	    libusb_bulk_transfer(handle->device_handle,

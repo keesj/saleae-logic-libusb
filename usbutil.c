@@ -3,8 +3,12 @@
 
 #include <stdio.h>
 
-static void usbutil_dump_config_descriptor(FILE* file, struct libusb_config_descriptor* config_descriptor);
-static void usbutil_dump_device_descriptor(FILE* file, struct libusb_device_descriptor* device_descriptor);
+static void usbutil_dump_config_descriptor(FILE * file,
+					   struct libusb_config_descriptor
+					   *config_descriptor);
+static void usbutil_dump_device_descriptor(FILE * file,
+					   struct libusb_device_descriptor
+					   *device_descriptor);
 
 /* This method looks if the kernel already has a driver attached
  * to the device. if so I will take over the device.
@@ -28,7 +32,8 @@ static enum libusb_error claim_device(libusb_device_handle * dev, int interface)
 			usbutil_error_to_string(err));
 		return err;
 	}
-	fprintf(stderr, "libusb_set_configuration: %s\n", usbutil_error_to_string(err));
+	fprintf(stderr, "libusb_set_configuration: %s\n",
+		usbutil_error_to_string(err));
 
 	/* claim interface */
 	if ((err = libusb_claim_interface(dev, interface))) {
@@ -36,14 +41,16 @@ static enum libusb_error claim_device(libusb_device_handle * dev, int interface)
 			usbutil_error_to_string(err));
 		return err;
 	}
-	fprintf(stderr, "libusb_claim_interface: %s\n", usbutil_error_to_string(err));
+	fprintf(stderr, "libusb_claim_interface: %s\n",
+		usbutil_error_to_string(err));
 
 	if ((err = libusb_set_interface_alt_setting(dev, interface, 0))) {
 		fprintf(stderr, "libusb_set_interface_alt_setting: %s\n",
 			usbutil_error_to_string(err));
 		return err;
 	}
-	fprintf(stderr, "libusb_set_interface_alt_setting: %s\n", usbutil_error_to_string(err));
+	fprintf(stderr, "libusb_set_interface_alt_setting: %s\n",
+		usbutil_error_to_string(err));
 
 	return LIBUSB_SUCCESS;
 }
@@ -102,12 +109,14 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 	}
 
 	struct libusb_config_descriptor *config_descriptor;
-	if ((err = libusb_get_active_config_descriptor(found, &config_descriptor))) {
+	if ((err =
+	     libusb_get_active_config_descriptor(found, &config_descriptor))) {
 		fprintf(stderr, "libusb_get_active_config_descriptor: %s\n",
 			usbutil_error_to_string(err));
 		return NULL;
 	}
-	fprintf(stderr, "libusb_get_active_config_descriptor: %s\n", usbutil_error_to_string(err));
+	fprintf(stderr, "libusb_get_active_config_descriptor: %s\n",
+		usbutil_error_to_string(err));
 
 	usbutil_dump_config_descriptor(stderr, config_descriptor);
 	libusb_free_config_descriptor(config_descriptor);
@@ -115,16 +124,14 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 	struct libusb_device_descriptor device_descriptor;
 	libusb_get_device_descriptor(found, &device_descriptor);
 	usbutil_dump_device_descriptor(stderr, &device_descriptor);
-	/*
-	*/
-	/*
-	 */
-	fprintf(stderr, "\n");
 
 	return device_handle;
 }
 
-void usbutil_dump_config_descriptor(FILE* file, struct libusb_config_descriptor* config_descriptor) {
+void usbutil_dump_config_descriptor(FILE * file,
+				    struct libusb_config_descriptor
+				    *config_descriptor)
+{
 	// TODO: Decode bytes to strings
 	fprintf(file, "Configuration descriptor:\n");
 	fprintf(file, " bConfigurationValue: %d\n",
@@ -133,38 +140,64 @@ void usbutil_dump_config_descriptor(FILE* file, struct libusb_config_descriptor*
 
 	const struct libusb_interface *interface = config_descriptor->interface;
 	int i, j, k;
-	for(i = 0; i < config_descriptor->bNumInterfaces; i++, interface++) {
-		fprintf(file, "  Interface #%d: Descriptors: (%d)\n", i, interface->num_altsetting);
-		const struct libusb_interface_descriptor* interface_descriptor = interface->altsetting;
-		for(j = 0; j < interface->num_altsetting; j++, interface_descriptor++) {
+	for (i = 0; i < config_descriptor->bNumInterfaces; i++, interface++) {
+		fprintf(file, "  Interface #%d: Descriptors: (%d)\n", i,
+			interface->num_altsetting);
+		const struct libusb_interface_descriptor *interface_descriptor =
+		    interface->altsetting;
+		for (j = 0; j < interface->num_altsetting;
+		     j++, interface_descriptor++) {
 			fprintf(file, "   Descriptor #%d:\n", j);
-			fprintf(file, "    Interface class/sub-class: %d/%d\n", interface_descriptor->bInterfaceClass, interface_descriptor->bInterfaceSubClass);
-			fprintf(file, "    Protocol: %d\n", interface_descriptor->bInterfaceProtocol);
-			fprintf(file, "    Endpoints: (%d)\n", interface_descriptor->bNumEndpoints);
-			const struct libusb_endpoint_descriptor *endpoint_descriptor = interface_descriptor->endpoint;
-			for(k = 0; k < interface_descriptor->bNumEndpoints; k++, endpoint_descriptor++) {
-				char* direction = ((endpoint_descriptor->bEndpointAddress & 0x80) == LIBUSB_ENDPOINT_IN) ? "in" : "out";
+			fprintf(file, "    Interface class/sub-class: %d/%d\n",
+				interface_descriptor->bInterfaceClass,
+				interface_descriptor->bInterfaceSubClass);
+			fprintf(file, "    Protocol: %d\n",
+				interface_descriptor->bInterfaceProtocol);
+			fprintf(file, "    Endpoints: (%d)\n",
+				interface_descriptor->bNumEndpoints);
+			const struct libusb_endpoint_descriptor
+			    *endpoint_descriptor =
+			    interface_descriptor->endpoint;
+			for (k = 0; k < interface_descriptor->bNumEndpoints;
+			     k++, endpoint_descriptor++) {
+				char *direction =
+				    ((endpoint_descriptor->
+				      bEndpointAddress & 0x80) ==
+				     LIBUSB_ENDPOINT_IN) ? "in" : "out";
 
 				fprintf(file, "     Endpoint #%d\n", k);
-				fprintf(file, "      Address: %d, direction=%s\n", endpoint_descriptor->bEndpointAddress & 0x0f, direction);
-				fprintf(file, "      Attributes: %02x\n", endpoint_descriptor->bmAttributes);
-				fprintf(file, "      Max packet size: %u\n", endpoint_descriptor->wMaxPacketSize);
-				fprintf(file, "      Poll interval: %d\n", endpoint_descriptor->bInterval);
-				fprintf(file, "      Refresh: %d\n", endpoint_descriptor->bRefresh);
-				fprintf(file, "      Sync address: %d\n", endpoint_descriptor->bSynchAddress);
+				fprintf(file,
+					"      Address: %d, direction=%s\n",
+					endpoint_descriptor->
+					bEndpointAddress & 0x0f, direction);
+				fprintf(file, "      Attributes: %02x\n",
+					endpoint_descriptor->bmAttributes);
+				fprintf(file, "      Max packet size: %u\n",
+					endpoint_descriptor->wMaxPacketSize);
+				fprintf(file, "      Poll interval: %d\n",
+					endpoint_descriptor->bInterval);
+				fprintf(file, "      Refresh: %d\n",
+					endpoint_descriptor->bRefresh);
+				fprintf(file, "      Sync address: %d\n",
+					endpoint_descriptor->bSynchAddress);
 			}
 		}
 	}
 }
 
-void usbutil_dump_device_descriptor(FILE* file, struct libusb_device_descriptor* device_descriptor) {
+void usbutil_dump_device_descriptor(FILE * file,
+				    struct libusb_device_descriptor
+				    *device_descriptor)
+{
 	// TODO: Decode bytes to strings
 	fprintf(file, "Device descriptor:\n");
 	fprintf(file, " Class: %d\n", device_descriptor->bDeviceClass);
 	fprintf(file, " Sub-class: %d\n", device_descriptor->bDeviceSubClass);
 	fprintf(file, " Protocol: %d\n", device_descriptor->bDeviceProtocol);
-	fprintf(file, " Vendor id / product id: %04x / %04x\n", device_descriptor->idVendor, device_descriptor->idProduct);
-	fprintf(file, " Number of possible configurations: %d\n", device_descriptor->bNumConfigurations);
+	fprintf(file, " Vendor id / product id: %04x / %04x\n",
+		device_descriptor->idVendor, device_descriptor->idProduct);
+	fprintf(file, " Number of possible configurations: %d\n",
+		device_descriptor->bNumConfigurations);
 }
 
 char *usbutil_error_to_string(enum libusb_error error)
