@@ -1,5 +1,9 @@
 *.o
 .deps
 *.swp
+<<<<<<< HEAD:.gitignore
+=======
+Makefile.local
+>>>>>>> 2658783dc39d75c47f9352061cd33715de50cb7f:.gitignore
 
 /main
