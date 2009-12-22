@@ -5,16 +5,18 @@
 #include <libusb.h>
 
 /* sleep time table */
-#define DELAY_FOR_24000000   1
-#define DELAY_FOR_16000000   2
-#define DELAY_FOR_12000000   3
-#define DELAY_FOR_8000000    5
-#define DELAY_FOR_4000000   11
-#define DELAY_FOR_2000000   24
-#define DELAY_FOR_1000000   47
-#define DELAY_FOR_500000    95
-#define DELAY_FOR_250000   191
-#define DELAY_FOR_200000   239
+enum slogic_sample_rate {
+	sample_rate_24MHz = 1,
+	sample_rate_16MHz = 2,
+	sample_rate_12MHz = 3,
+	sample_rate_8MHz = 5,
+	sample_rate_4MHz = 11,
+	sample_rate_2MHz = 24,
+	sample_rate_1MHz = 47,
+	sample_rate_500kHz = 95,
+	sample_rate_250kHz = 191,
+	sample_rate_200kHz = 239
+};
 
 #define BUFFER_SIZE 0x4000	/* 4K */
 
@@ -39,6 +41,7 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
  * protocol. This methods is really a proof of concept as the
  * data is not exported yet
  */
-int slogic_read_samples(struct slogic_handle *handle);
+int slogic_read_samples(struct slogic_handle *handle,
+			enum slogic_sample_rate sample_rate);
 
 #endif

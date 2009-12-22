@@ -90,14 +90,16 @@ static int tcounter = 0;
 
 struct stransfer {
 	struct libusb_transfer *transfer;
-	int seq;
 	struct slogic_handle *shandle;
+	unsigned char *buffer;
+	int seq;
 };
 
 static struct stransfer transfers[TRANSFER_BUFFERS];
 
+static int transfer_counter;
 /* keep track of the amount of transfeered data */
-static int sample_counter = 0;
+static int sample_counter;
 
 void slogic_read_samples_callback_start_log(struct libusb_transfer
 					    *transfer)
@@ -107,13 +109,20 @@ void slogic_read_samples_callback_start_log(struct libusb_transfer
 	/* free data? */
 };
 
+static int transfer_failed;
+
 void slogic_read_samples_callback(struct libusb_transfer *transfer)
 {
 	struct stransfer *stransfer = transfer->user_data;
 	int ret;
 
-#if 0
 	assert(stransfer);
+
+	transfer_counter++;
+	if (transfer->actual_length == 0) {
+		transfer_failed = 1;
+	}
+#if 0
 	if (tcounter == 200) {
 		struct libusb_transfer *transfer;
 		unsigned char cmd[2];
@@ -139,8 +148,8 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 #endif
 
 	sample_counter += transfer->actual_length;
-	printf("tcounter = %d, sample_counter = %d\n", tcounter,
-	       sample_counter);
+	printf("tcounter = %d, sample_sum = %d, sample_size = %d\n", tcounter,
+	       sample_counter, transfer->actual_length);
 #if 0
 	if (tcounter < 2000) {
 #endif
@@ -160,11 +169,11 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 }
 
 /*
- * slogic_read_samples reads 1800 samples using the streaming 
- * protocol. This methods is really a proof of concept as the
+ * This methods is really a proof of concept as the
  * data is not exported yet
  */
-int slogic_read_samples(struct slogic_handle *handle)
+int slogic_read_samples(struct slogic_handle *handle,
+			enum slogic_sample_rate sample_rate)
 {
 	struct libusb_transfer *transfer;
 	unsigned char *buffer;
@@ -197,8 +206,12 @@ int slogic_read_samples(struct slogic_handle *handle)
 		}
 	}
 
+	transfer_failed = 0;
+	sample_counter = 0;
+	transfer_counter = 0;
+
 	// Switch the logic to streaming read mode
-	unsigned char command[] = { 0x01, DELAY_FOR_200000 };
+	unsigned char command[] = { 0x01, sample_rate };
 	int transferred;
 	ret =
 	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
@@ -211,7 +224,7 @@ int slogic_read_samples(struct slogic_handle *handle)
 	}
 	assert(transferred == 2);
 
-	while (tcounter < 20000 - TRANSFER_BUFFERS) {
+	while (tcounter < 20000 - TRANSFER_BUFFERS && !transfer_failed) {
 		printf("Processing events...\n");
 		ret = libusb_handle_events(handle->context);
 		if (ret) {
@@ -220,7 +233,18 @@ int slogic_read_samples(struct slogic_handle *handle)
 			return ret;
 		}
 	}
-	printf("Total number of Samples red is %i\n", sample_counter);
+
+//      for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
+//              libusb_free_transfer(transfers);
+//      }
+
+	if (transfer_failed) {
+		printf("FAIL!\n");
+	} else {
+		printf("SUCCESS!\n");
+	}
+	printf("Total number of samples read: %i\n", sample_counter);
+	printf("Total number of transfers: %i\n", transfer_counter);
 
 	return 0;
 }
