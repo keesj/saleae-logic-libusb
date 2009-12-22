@@ -57,18 +57,25 @@ char slogic_readbyte(struct slogic_handle *handle)
 	unsigned char out_byte = 0x05;
 	unsigned char in_byte = 0x00;
 	int transferred;
+	unsigned char endpoint = 0x01;
+
 	ret =
-	    libusb_bulk_transfer(handle->device_handle, 0x01, &out_byte, 1,
+	    libusb_bulk_transfer(handle->device_handle, endpoint, &out_byte, 1,
 				 &transferred, 100);
 	if (ret) {
-		fprintf(stderr, "libusb_bulk_transfer: %s\n",
+		fprintf(stderr, "libusb_bulk_transfer (out): %s\n",
 			usbutil_error_to_string(ret));
 	}
+	/*	*/
 	assert(ret == 0);
 	ret =
 	    libusb_bulk_transfer(handle->device_handle,
-				 0x01 | LIBUSB_ENDPOINT_IN, &in_byte, 1,
+				 endpoint | LIBUSB_ENDPOINT_IN, &in_byte, 1,
 				 &transferred, 100);
+	if (ret) {
+		fprintf(stderr, "libusb_bulk_transfer (in): %s\n",
+			usbutil_error_to_string(ret));
+	}
 	//assert(count > 0 );
 	return in_byte;
 }
