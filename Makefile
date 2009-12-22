@@ -15,7 +15,7 @@ run: main
 
 main: main.o slogic.o firmware.o usbutil.o
 
-firmware.h:
+firmware.c:
 	$(MAKE) -C firmware
 
 clean:

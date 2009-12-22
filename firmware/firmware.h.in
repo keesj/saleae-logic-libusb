@@ -11,3 +11,8 @@ include(`firm_cmds.inc')
 unsigned char slogic_firm_data[]= {
 include(`firm_data.inc')
 };
+
+int slogic_firm_cmds_size()
+{
+return sizeof(slogic_firm_cmds);
+}

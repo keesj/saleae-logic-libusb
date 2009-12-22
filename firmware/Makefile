@@ -1,5 +1,5 @@
 ../firmware.h:firmware.h.in firm_cmds.inc firm_data.inc
-	m4 firmware.h.in > ../firmware.h
+	m4 firmware.h.in > ../firmware.c
 convert:convert.c
 
 firm_cmds.inc:firmware.usbmon
