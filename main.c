@@ -25,13 +25,13 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Failed to find the device\n");
 		return -1;
 	}
-//    if (!slogic_is_firmware_uploaded(&handle)) {
-//      printf("Uploading firmware restart program\n");
-//      slogic_upload_firmware(&handle);
-//      libusb_close(handle.device_handle);
-//      libusb_exit(handle.context);
-//      return -1;
-//    }
+	if (!slogic_is_firmware_uploaded(&handle)) {
+		printf("Uploading firmware restart program\n");
+		slogic_upload_firmware(&handle);
+		libusb_close(handle.device_handle);
+		libusb_exit(handle.context);
+		return -1;
+	}
 	/* apparently one need to at least read once before the driver continues */
 	slogic_readbyte(&handle);
 
