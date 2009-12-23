@@ -36,6 +36,10 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle);
 
 char slogic_readbyte(struct slogic_handle *handle);
 
+
+/* we use a structure containing a libusb_transfer and a sequence.
+ * We need this sequence to know the order of the incoming transfers.
+ */
 struct stransfer {
 	struct libusb_transfer *transfer;
 	int seq;

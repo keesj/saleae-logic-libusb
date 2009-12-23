@@ -80,7 +80,7 @@ static int sample_counter = 0;
 void slogic_read_samples_callback_start_log(struct libusb_transfer
 					    *transfer)
 {
-	printf("start log\n");
+	printf("Start logging\n");
 	libusb_free_transfer(transfer);
 	/* free data? */
 };
@@ -93,10 +93,8 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 		struct libusb_transfer *transfer;
 		unsigned char cmd[2];
 		cmd[0] = 0x01;
-		//cmd[1] = DELAY_FOR_12000000;
-		//cmd[1] = DELAY_FOR_8000000;
 		cmd[1] = DELAY_FOR_4000000;
-		//cmd[1] = DELAY_FOR_200000;
+
 		transfer = libusb_alloc_transfer(0 /* we use bulk */ );
 		assert(transfer);
 		libusb_fill_bulk_transfer(transfer,
@@ -105,24 +103,19 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 					  slogic_read_samples_callback_start_log,
 					  NULL, 10);
 		libusb_submit_transfer(transfer);
+		/* don't return here, we will still resend the incomming transfer */
 	}
 
+	if (transfer->status !=LIBUSB_TRANSFER_TIMED_OUT ){
+		printf("Timeout on transfer %i\n",stransfer->seq);
+	} 
 	sample_counter += transfer->actual_length;
-#if 0
-	if (tcounter < 2000) {
-#endif
-		stransfer->seq = tcounter++;
-		libusb_submit_transfer(stransfer->transfer);
-#if 0
-	} else {
-		libusb_free_transfer(transfer);
-		/* free data? */
-	}
-#endif
+	stransfer->seq = tcounter++;
+	libusb_submit_transfer(stransfer->transfer);
 }
 
 /*
- * slogic_read_samples reads 1800 samples using the streaming 
+ * slogic_read_samples reads 18000 samples using the streaming 
  * protocol. This methods is really a proof of concept as the
  * data is not exported yet
  */
@@ -132,6 +125,7 @@ void slogic_read_samples(struct slogic_handle *handle)
 	unsigned char *buffer;
 	int counter;
 
+	/* Create TRANSFER_BUFFERS buffers we are going to reuse */
 	for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
 		buffer = malloc(BUFFER_SIZE);
 		assert(buffer);
@@ -142,18 +136,26 @@ void slogic_read_samples(struct slogic_handle *handle)
 					  0x02 | LIBUSB_ENDPOINT_IN, buffer,
 					  BUFFER_SIZE,
 					  slogic_read_samples_callback,
-					  &transfers[counter], 4);
+					  &transfers[counter], 20);
 		transfers[counter].transfer = transfer;
 		transfers[counter].shandle = handle;
 	}
 
+	/* start by queueing the TRANSFER_BUFFERS transfers */
 	for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
 		transfers[counter].seq = tcounter++;
 		libusb_submit_transfer(transfers[counter].transfer);
 	}
 
+	/* while we did not perform 20000 transfers keep calling the libusb
+	 * handle events 
+	 */
 	while (tcounter < 20000 - TRANSFER_BUFFERS) {
 		libusb_handle_events(handle->context);
+	}
+
+	for (counter = 0; counter < TRANSFER_BUFFERS; counter++) {
+		libusb_free_transfer(transfers[counter].transfer);
 	}
 	printf("Total number of Samples red is %i\n", sample_counter);
 }
