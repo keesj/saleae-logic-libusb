@@ -1,5 +1,6 @@
 // vim: ts=8:noexpandtab
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
@@ -8,44 +9,34 @@
 #include "slogic.h"
 #include "usbutil.h"
 
-//Bus 006 Device 006: ID 0925:3881 Lakeview Research
-#define USB_VENDOR_ID 0x0925
-#define USB_PRODUCT_ID 0x3881
-
 int main(int argc, char **argv)
 {
-	struct slogic_handle handle;
+	struct slogic_handle *handle = slogic_open();
 
-	libusb_init(&handle.context);
+	assert(handle);
 
-	libusb_set_debug(handle.context, 3);
-
-	handle.device_handle =
-	    open_device(handle.context, USB_VENDOR_ID, USB_PRODUCT_ID);
-	if (!handle.device_handle) {
-		fprintf(stderr, "Failed to find the device\n");
-		return -1;
-	}
-	if (!slogic_is_firmware_uploaded(&handle)) {
-		printf("Uploading firmware restart program\n");
-		slogic_upload_firmware(&handle);
-		libusb_close(handle.device_handle);
-		libusb_exit(handle.context);
-		return -1;
-	}
 	/* apparently one need to at least read once before the driver continues */
 #if 0
 	printf("Reading byte\n");
 	unsigned char b;
-	int ret = slogic_readbyte(&handle, &b);
+	int ret = slogic_readbyte(handle, &b);
 	assert(ret == 0);
 	printf("ret = %d, byte = 0x02%x\n", ret, b);
 #endif
+	int sample_count = 24 * 1000 * 1000;	/* Enough for one second of 24Msps */
+	struct slogic_sample_rate *sample_rate =
+	    slogic_parse_sample_rate("200kHz");
+	sample_rate = slogic_parse_sample_rate("24MHz");
+	sample_rate = slogic_parse_sample_rate("250kHz");
+	assert(sample_rate);
+
+	uint8_t *buffer = malloc(sample_count);
+	assert(buffer);
 
 	printf("slogic_read_samples\n");
-	slogic_read_samples(&handle, sample_rate_24MHz);
+	slogic_read_samples(handle, sample_rate, buffer, sample_count);
 
-	libusb_close(handle.device_handle);
-	libusb_exit(handle.context);
+	slogic_close(handle);
+
 	return 0;
 }

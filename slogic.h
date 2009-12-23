@@ -4,33 +4,20 @@
 
 #include <libusb.h>
 
-/* sleep time table */
-enum slogic_sample_rate {
-	sample_rate_24MHz = 1,
-	sample_rate_16MHz = 2,
-	sample_rate_12MHz = 3,
-	sample_rate_8MHz = 5,
-	sample_rate_4MHz = 11,
-	sample_rate_2MHz = 24,
-	sample_rate_1MHz = 47,
-	sample_rate_500kHz = 95,
-	sample_rate_250kHz = 191,
-	sample_rate_200kHz = 239
-};
+struct slogic_sample_rate;
+
+struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 
 /**
  * Contract between the main program and the utility library
- **/
-struct slogic_handle {
-	/* pointer to the usb handle */
-	libusb_device_handle *device_handle;
-	libusb_context *context;
-};
+ */
+struct slogic_handle;
 
-void slogic_upload_firmware(struct slogic_handle *handle);
+struct slogic_handle *slogic_open();
+void slogic_close(struct slogic_handle *handle);
 
-/* return 1 if the firmware is uploaded 0 if not */
-int slogic_is_firmware_uploaded(struct slogic_handle *handle);
+void slogic_tune(struct slogic_handle *handle, size_t transfer_buffer_size,
+		 unsigned int n_transfer_buffers, int libusb_debug_level);
 
 int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
 
@@ -40,6 +27,7 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
  * data is not exported yet
  */
 int slogic_read_samples(struct slogic_handle *handle,
-			enum slogic_sample_rate sample_rate);
+			struct slogic_sample_rate *sample_rate,
+			uint8_t * samples, size_t recording_size);
 
 #endif

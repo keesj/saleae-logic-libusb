@@ -1,2 +1,4 @@
 o When starting up and the device is connected, reset it somehow. If stuff
   fails the next run will fail with a timeout. - Trygve
+
+o Add a ctrl-c handler which shuts down all transfers and closes libusb. - Trygve
