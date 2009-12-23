@@ -1,4 +1,4 @@
-// vim: ts=8:noexpandtab
+// vim: sw=8:ts=8:noexpandtab
 #ifndef __SLOGIC_H__
 #define __SLOGIC_H__
 

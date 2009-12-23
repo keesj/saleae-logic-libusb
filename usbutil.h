@@ -1,4 +1,4 @@
-// vim: ts=8:noexpandtab
+// vim: sw=8:ts=8:noexpandtab
 #include <libusb.h>
 
 /* Iterates over the usb devices on the usb busses and returns a handle to the

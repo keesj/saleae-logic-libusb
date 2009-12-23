@@ -1,4 +1,4 @@
-// vim: ts=8:noexpandtab
+// vim: sw=8:ts=8:noexpandtab
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
