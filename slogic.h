@@ -4,7 +4,14 @@
 
 #include <libusb.h>
 
-struct slogic_sample_rate;
+struct slogic_sample_rate {
+	const uint8_t pause;
+	const char *text;
+	const unsigned int samples_per_second;
+};
+
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out,
+				   size_t * size);
 
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 

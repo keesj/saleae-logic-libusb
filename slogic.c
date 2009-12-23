@@ -37,11 +37,6 @@ struct slogic_handle {
 /*
  * Sample Rate
  */
-struct slogic_sample_rate {
-	const uint8_t pause;
-	const char *text;
-	const unsigned int samples_per_second;
-};
 
 struct slogic_sample_rate sample_rates[] = {
 	{1, "24MHz", 24000000},
@@ -56,13 +51,21 @@ struct slogic_sample_rate sample_rates[] = {
 	{239, "200kHz", 200000},
 };
 
+static const int n_sample_rates =
+    sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
+
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out,
+				   size_t * size)
+{
+	*sample_rates_out = sample_rates;
+	*size = n_sample_rates;
+}
+
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str)
 {
 	int i;
 
-	for (i = 0;
-	     i < sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
-	     i++) {
+	for (i = 0; i < n_sample_rates; i++) {
 		struct slogic_sample_rate *sample_rate = &sample_rates[i];
 		if (strcmp(sample_rate->text, str) == 0) {
 			return sample_rate;
@@ -157,15 +160,15 @@ void slogic_tune(struct slogic_handle *handle, size_t transfer_buffer_size,
 {
 	assert(handle);
 
-	if(transfer_buffer_size) {
+	if (transfer_buffer_size) {
 		handle->transfer_buffer_size = transfer_buffer_size;
 	}
 
-	if(n_transfer_buffers) {
+	if (n_transfer_buffers) {
 		handle->n_transfer_buffers = n_transfer_buffers;
 	}
 
-	if(libusb_debug_level) {
+	if (libusb_debug_level) {
 		libusb_set_debug(handle->context, libusb_debug_level);
 	}
 }
@@ -301,9 +304,12 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 #endif
 
 	stransfer->recording->sample_count += transfer->actual_length;
-	printf("tcounter = %d, sample_count = %d, actual_length = %d, left=%.02f\n", tcounter,
-	       stransfer->recording->sample_count, transfer->actual_length, 
-	       ((float)stransfer->recording->sample_count)/stransfer->recording->recording_size * 100);
+	printf
+	    ("tcounter = %d, sample_count = %d, actual_length = %d, left=%.02f\n",
+	     tcounter, stransfer->recording->sample_count,
+	     transfer->actual_length,
+	     ((float)stransfer->recording->sample_count) /
+	     stransfer->recording->recording_size * 100);
 #if 0
 	if (tcounter < 2000) {
 #endif
@@ -339,7 +345,8 @@ int slogic_read_samples(struct slogic_handle *handle,
 	    allocate_recording(handle, samples, recording_size);
 
 	fprintf(stderr, "Starting recording for %zu samples\n", recording_size);
-	fprintf(stderr, "Transfer buffers=%d, buffer size=%zu\n", recording->n_transfer_buffers, handle->transfer_buffer_size);
+	fprintf(stderr, "Transfer buffers=%d, buffer size=%zu\n",
+		recording->n_transfer_buffers, handle->transfer_buffer_size);
 
 	// Pre-allocate transfers
 	for (counter = 0; counter < recording->n_transfer_buffers; counter++) {
@@ -363,8 +370,8 @@ int slogic_read_samples(struct slogic_handle *handle,
 	for (counter = 0; counter < recording->n_transfer_buffers; counter++) {
 		recording->transfers[counter].seq = tcounter++;
 		ret =
-		    libusb_submit_transfer(recording->
-					   transfers[counter].transfer);
+		    libusb_submit_transfer(recording->transfers[counter].
+					   transfer);
 		if (ret) {
 			fprintf(stderr, "libusb_submit_transfer: %s\n",
 				usbutil_error_to_string(ret));
