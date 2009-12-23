@@ -1,5 +1,3 @@
-#firmware.o: firmware.c firmware.h firm_cmds.inc firm_data.inc
-
 firm_cmds.inc: firmware.usbmon
 	cat firmware.usbmon | \
         grep "s 40" | \
@@ -15,7 +13,7 @@ firm_data.inc: firmware.usbmon
         > firm_data.inc
 
 sinclude .deps
-.deps: $(wildcard *.c) $(wildcard *.h)
+.deps: $(wildcard *.c) $(wildcard *.h) firm_cmds.inc firm_data.inc
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c > .deps
 
 clean:
