@@ -10,16 +10,14 @@
 #include <string.h>
 
 #define DEFAULT_N_TRANSFER_BUFFERS 4
-
 #define DEFAULT_TRANSFER_BUFFER_SIZE 4 * 1024
 
-// EP1 OUT
+/* 
+ * define EP1 OUT , EP1 IN, EP2 IN and EP6 OUT
+ */
 #define COMMAND_OUT_ENDPOINT 0x01
-// EP1 IN
 #define COMMAND_IN_ENDPOINT 0x81
-// EP2 IN
 #define STREAMING_DATA_IN_ENDPOINT 0x82
-// EP6 OUT
 #define STREAMING_DATA_OUT_ENDPOINT 0x06
 
 //Bus 006 Device 006: ID 0925:3881 Lakeview Research
@@ -35,9 +33,8 @@ struct slogic_handle {
 };
 
 /*
- * Sample Rate
+ * Sample Rates
  */
-
 struct slogic_sample_rate sample_rates[] = {
 	{1, "24MHz", 24000000},
 	{2, "16MHz", 16000000},
@@ -278,30 +275,6 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 			stransfer->recording->failed = 1;
 		}
 	}
-#if 0
-	if (tcounter == 200) {
-		struct libusb_transfer *transfer;
-		unsigned char cmd[2];
-		cmd[0] = 0x01;
-		//cmd[1] = DELAY_FOR_12000000;
-		//cmd[1] = DELAY_FOR_8000000;
-		cmd[1] = DELAY_FOR_4000000;
-		//cmd[1] = DELAY_FOR_200000;
-		transfer = libusb_alloc_transfer(0);	// 0 == bulk transfer
-		assert(transfer);
-		libusb_fill_bulk_transfer(transfer,
-					  stransfer->shandle->device_handle,
-					  0x01, cmd, 2,
-					  slogic_read_samples_callback_start_log,
-					  NULL, 10);
-		ret = libusb_submit_transfer(transfer);
-		if (ret) {
-			fprintf(stderr, "libusb_submit_transfer: %s\n",
-				usbutil_error_to_string(ret));
-			return;
-		}
-	}
-#endif
 
 	stransfer->recording->sample_count += transfer->actual_length;
 	printf
@@ -310,22 +283,13 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	     transfer->actual_length,
 	     ((float)stransfer->recording->sample_count) /
 	     stransfer->recording->recording_size * 100);
-#if 0
-	if (tcounter < 2000) {
-#endif
-		stransfer->seq = tcounter++;
-		ret = libusb_submit_transfer(stransfer->transfer);
-		if (ret) {
-			fprintf(stderr, "libusb_submit_transfer: %s\n",
-				usbutil_error_to_string(ret));
-			return;
-		}
-#if 0
-	} else {
-		libusb_free_transfer(transfer);
-		/* free data? */
+	stransfer->seq = tcounter++;
+	ret = libusb_submit_transfer(stransfer->transfer);
+	if (ret) {
+		fprintf(stderr, "libusb_submit_transfer: %s\n",
+			usbutil_error_to_string(ret));
+		return;
 	}
-#endif
 }
 
 /*
@@ -370,8 +334,8 @@ int slogic_read_samples(struct slogic_handle *handle,
 	for (counter = 0; counter < recording->n_transfer_buffers; counter++) {
 		recording->transfers[counter].seq = tcounter++;
 		ret =
-		    libusb_submit_transfer(recording->transfers[counter].
-					   transfer);
+		    libusb_submit_transfer(recording->
+					   transfers[counter].transfer);
 		if (ret) {
 			fprintf(stderr, "libusb_submit_transfer: %s\n",
 				usbutil_error_to_string(ret));

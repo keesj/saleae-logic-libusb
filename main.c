@@ -141,14 +141,6 @@ int main(int argc, char **argv)
 	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers,
 		    libusb_debug_level);
 
-#if 0
-	/* apparently one need to at least read once before the driver continues */
-	printf("Reading byte\n");
-	unsigned char b;
-	int ret = slogic_readbyte(handle, &b);
-	assert(ret == 0);
-	printf("ret = %d, byte = 0x02%x\n", ret, b);
-#endif
 	uint8_t *buffer = malloc(n_samples);
 	assert(buffer);
 
