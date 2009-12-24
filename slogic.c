@@ -1,4 +1,5 @@
 // vim: sw=8:ts=8:noexpandtab
+/* KEJO: move private headers after the putlic headers */
 #include "slogic.h"
 #include "usbutil.h"
 #include "firmware/firmware.h"
@@ -35,6 +36,7 @@ struct slogic_handle {
 /*
  * Sample Rates
  */
+/* KEJO: move to the public header */
 struct slogic_sample_rate sample_rates[] = {
 	{1, "24MHz", 24000000},
 	{2, "16MHz", 16000000},
@@ -201,11 +203,14 @@ static int tcounter = 0;
 
 struct stransfer {
 	// TODO: Access to the recording probably should be synchronized
+/* KEJO: probably not, we will need to call a callback and be sure that we don't queue the transfer again.
+After that it's to the called callback to implement something*might be circular buffer */
 	struct slogic_recording *recording;
 	struct libusb_transfer *transfer;
 	int seq;
 };
 
+/*KEJO: the lib should only provide a callback we should not care about "recordings" here and not about Number of samples we want to collect */
 struct slogic_recording {
 	uint8_t *samples;
 	/* Number of samples we want to collect */
@@ -344,6 +349,7 @@ int slogic_read_samples(struct slogic_handle *handle,
 	}
 
 	// Switch the logic to streaming read mode
+	/* KEJO: pause as in delay between samples.. */
 	printf("pause=%d\n", sample_rate->pause);
 	unsigned char command[] = { 0x01, sample_rate->pause };
 	int transferred;

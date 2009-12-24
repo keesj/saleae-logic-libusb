@@ -11,6 +11,10 @@
 #include "usbutil.h"
 
 /* Command line arguments */
+
+
+/* KEJO: I tend to like to put all those global variable in a struct that can be passed around 
+this makes it possible to create threaded application as there will be no shared data in between */
 struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
 size_t n_samples = 0;
@@ -20,6 +24,12 @@ int libusb_debug_level = 0;
 
 const char *me = "main";
 
+
+/* KEJO: usage is way to long when there is an error. only show usage on some --help option or similar.
+the normal output can be something like
+usage: main -f <sample_rate> -r bla ....
+Error: no file specified
+*/
 int usage(const char *message, ...)
 {
 	int i;
@@ -28,6 +38,7 @@ int usage(const char *message, ...)
 
 	slogic_available_sample_rates(&sample_rates, &n_sample_rates);
 
+/* using the + is a c++/java thingy we let the pre processor do it */
 	fprintf(stderr, "usage: %s -f <output file> -r <sample rate> "
 		"[-n <number of samples>]\n", me);
 	fprintf(stderr, "\n");
@@ -58,11 +69,13 @@ int usage(const char *message, ...)
 		fprintf(stderr, "Error: %s\n", p);
 	}
 
+/* KEJO: It's not up to the user method to return a correct error code */
 	return 0;
 }
 
 int parse_args(int argc, char **argv)
 {
+/* KEJO: compiler wanring that msg is not used */
 	const char *msg;	/* The indentation gets insane */
 	char c;
 	while ((c = getopt(argc, argv, "r:n:f:b:t:u:")) != -1) {
@@ -70,6 +83,7 @@ int parse_args(int argc, char **argv)
 		case 'r':
 			sample_rate = slogic_parse_sample_rate(optarg);
 			if (!sample_rate) {
+/* KEJO: in the c/unix world returning 0 is "success" it would be good to keep consistent with that */
 				return usage("Invalid sample rate: %s", optarg);
 			}
 			break;
@@ -132,22 +146,32 @@ int parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	if (!parse_args(argc, argv)) {
+/* KEJO: read man 3 exit, EXIT_FAILURE is to be passed as argument to the exit() method */
 		return EXIT_FAILURE;
 	}
 
+/* KEJO: the slogic_open should not perform the firmware uploading the hanlding should still be here */
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 
 	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers,
 		    libusb_debug_level);
 
+
+/* KEJO: A c program would do this differently. just like Joe "c++" api one would expect to be able to register a callback
+when data is ready, this should not be the full buffer but just one transfer. The API should make it possible to stream data.
+*/
 	uint8_t *buffer = malloc(n_samples);
 	assert(buffer);
 
 	printf("slogic_read_samples\n");
+/* KEJO  can we make one single struct containting the major settings when sampling.
+this should include the callback function. I think the n_samples should not be pass
+but the callback function should return a 1 when we need to stop sampling */
 	slogic_read_samples(handle, sample_rate, buffer, n_samples);
 
 	slogic_close(handle);
 
+/* KEJO if we use EXIT_FAILURE above lets use exit(EXIT_SECCESS) here */
 	return 0;
 }

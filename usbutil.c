@@ -1,7 +1,16 @@
 // vim: sw=8:ts=8:noexpandtab
+/*KEJO: I always first include the system include and only after that include the local includes
+I don't know if this is a standard of any kind but still */
 #include "usbutil.h"
 
 #include <stdio.h>
+
+/* KEJO: the way to define a method "file local" is to define is as static. 
+the usbutil_dump_device_descriptor and usbutil_dump_config_descriptor are not defined
+in the usbutil.h header and should contain the static modifier.
+
+I would accutaly just move the two method to here and not define the method here 
+ */
 
 void usbutil_dump_device_descriptor(FILE * file, struct libusb_device_descriptor
 				    *device_descriptor);
@@ -251,6 +260,7 @@ const char *usbutil_error_to_string(enum libusb_error error)
 	case LIBUSB_ERROR_OTHER:
 		return "LIBUSB_ERROR_OTHER";
 	default:
+/*KEJO perhaps add LIBUSB: Unknown error? */
 		return "Unknown error";
 	}
 }
