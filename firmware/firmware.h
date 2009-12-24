@@ -1,3 +1,4 @@
+// vim: ts=8:noexpandtab
 /* Firmware for the saleae logic analyzer */
 /* Geneated in the firmware directory */
 

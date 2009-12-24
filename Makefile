@@ -13,17 +13,19 @@ all: main
 run: main
 	./main
 
-main: main.o slogic.o firmware.o usbutil.o
+main: main.o slogic.o firmware/firmware.o usbutil.o
 
-firmware.c:
-	$(MAKE) -C firmware
+firmware/firmware.o:
+	$(MAKE) -C firmware firmware.o
 
 clean:
 	$(MAKE) -C firmware clean
-	rm -rf main .deps $(wildcard *.o)
-indent_kr:
-	indent -kr *.c *.h
+	rm -rf main .deps $(wildcard *.o *~)
+
+indent:
+	Lindent $(wildcard *.c *.h)
 
 sinclude .deps
 .deps: $(wildcard *.c) $(wildcard *.h)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c > .deps
+	$(MAKE) -C firmware .deps
