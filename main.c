@@ -54,19 +54,11 @@ void usage(const char *message, ...)
 	} else {
 		slogic_available_sample_rates(&sample_rates, &n_sample_rates);
 
-/* using the + is a c++/java thingy we let the pre processor do it */
-/* with only 80 in indent the code gets to insanely hard to read so I did some
-manual breaking of the lines to make it as easy to read as possible. I
-wouldn't mind switching to at least 120 character wide lines */
-/* OK 120 is fine - KEJO */
-		fprintf(stderr, "usage: %s -f <output file> -r <sample rate> "
-			"[-n <number of samples>]\n", me);
+		fprintf(stderr, "usage: %s -f <output file> -r <sample rate> [-n <number of samples>]\n", me);
 		fprintf(stderr, "\n");
 		fprintf(stderr, " -n: Number of samples to record\n");
-		fprintf(stderr, "     Defaults to one second of samples for the "
-			"specified sample rate\n");
-		fprintf(stderr, " -f: The output file. Using '-' means that the "
-			"bytes will be output to stdout.\n");
+		fprintf(stderr, "     Defaults to one second of samples for the specified sample rate\n");
+		fprintf(stderr, " -f: The output file. Using '-' means that the bytes will be output to stdout.\n");
 		fprintf(stderr, " -r: Select sample rate for the Logic.\n");
 		fprintf(stderr, "     Available sample rates:\n");
 		for (i = 0; i < n_sample_rates; i++, sample_rates++) {
@@ -76,8 +68,7 @@ wouldn't mind switching to at least 120 character wide lines */
 		fprintf(stderr, "Advanced options:\n");
 		fprintf(stderr, " -b: Transfer buffer size.\n");
 		fprintf(stderr, " -t: Number of transfer buffers.\n");
-		fprintf(stderr, " -u: libusb debug level: 0 to 3, 3 is most verbose. "
-			"Defaults to '0'.\n");
+		fprintf(stderr, " -u: libusb debug level: 0 to 3, 3 is most verbose. Defaults to '0'.\n");
 		fprintf(stderr, "\n");
 	}
 }
@@ -100,54 +91,47 @@ int parse_args(int argc, char **argv)
 		case 'n':
 			n_samples = strtol(optarg, NULL, 10);
 			if (n_samples <= 0) {
-                                usage("Invalid number of samples, must be a "
-                                "positive integer: %s",
-					     optarg);
-                                return 1;
+				usage("Invalid number of samples, must be a positive integer: %s", optarg);
+				return 1;
 			}
 			break;
 		case 'b':
 			transfer_buffer_size = strtol(optarg, NULL, 10);
 			if (transfer_buffer_size <= 0) {
-				usage("Invalid transfer buffer size, "
-					     "must be a positive integer: %s",
-					     optarg);
-                                return 1;
+				usage("Invalid transfer buffer size, must be a positive integer: %s", optarg);
+				return 1;
 			}
 			break;
 		case 't':
 			n_transfer_buffers = strtol(optarg, NULL, 10);
 			if (n_transfer_buffers <= 0) {
-				usage("Invalid transfer buffer size, "
-					     "must be a positive integer: %s",
-					     optarg);
-                                return 1;
+				usage("Invalid transfer buffer size, must be a positive integer: %s", optarg);
+				return 1;
 			}
 			break;
 		case 'u':
 			libusb_debug_level = strtol(optarg, NULL, 10);
 			if (libusb_debug_level < 0 || libusb_debug_level > 3) {
 				usage("Invalid libusb debug level, "
-					     "must be a positive integer between 0 and 3: %s",
-					     optarg);
-                                return 1;
+				      "must be a positive integer between 0 and 3: %s", optarg);
+				return 1;
 			}
 			break;
 		default:
 		case '?':
 			usage("Unknown argument: %c", optopt);
-                        return 1;
+			return 1;
 		}
 	}
 
 	if (!output_file_name) {
 		usage("An output file has to be specified.", optarg);
-                return 1;
+		return 1;
 	}
 
 	if (!sample_rate) {
 		usage("A sample rate has to be specified.", optarg);
-                return 1;
+		return 1;
 	}
 
 	if (!n_samples) {
@@ -174,8 +158,7 @@ to first upload and continue */
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 
-	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers,
-		    libusb_debug_level);
+	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers, libusb_debug_level);
 
 	uint8_t *buffer = malloc(n_samples);
 	assert(buffer);

@@ -23,7 +23,7 @@ clean:
 	rm -rf main .deps $(wildcard *.o *~)
 
 indent:
-	Lindent $(wildcard *.c *.h)
+	indent -npro -kr -i8 -ts8 -sob -l120 -ss -ncs -cp1 $(wildcard *.c *.h)
 
 sinclude .deps
 .deps: $(wildcard *.c) $(wildcard *.h)

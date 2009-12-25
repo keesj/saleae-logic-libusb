@@ -49,11 +49,9 @@ struct slogic_sample_rate sample_rates[] = {
 	{239, "200kHz", 200000},
 };
 
-static const int n_sample_rates =
-    sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
+static const int n_sample_rates = sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out,
-				   size_t * size)
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size)
 {
 	*sample_rates_out = sample_rates;
 	*size = n_sample_rates;
@@ -83,8 +81,7 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 	unsigned int *current;
 	int data_start;
 	int cmd_size = 3;
-	int cmd_count =
-	    slogic_firm_cmds_size() / sizeof(*slogic_firm_cmds) / cmd_size;
+	int cmd_count = slogic_firm_cmds_size() / sizeof(*slogic_firm_cmds) / cmd_size;
 
 	current = slogic_firm_cmds;
 	data_start = 0;
@@ -96,8 +93,7 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 		libusb_control_transfer(handle->device_handle, 0x40, 0XA0,
 					current[INDEX_CMD_REQUEST],
 					current[INDEX_CMD_VALUE],
-					&slogic_firm_data[data_start],
-					current[INDEX_PAYLOAD_SIZE], 4);
+					&slogic_firm_data[data_start], current[INDEX_PAYLOAD_SIZE], 4);
 		data_start += current[2];
 		current += cmd_size;
 	}
@@ -110,10 +106,9 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 	/* just try to perform a normal read, if this fails we assume the firmware is not uploaded */
 	unsigned char out_byte = 0x05;
 	int transferred;
-	int ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				 &out_byte, 1,
-				 &transferred, 100);
+	int ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
+				       &out_byte, 1,
+				       &transferred, 100);
 	return ret == 0;	/* probably the firmware is uploaded */
 }
 
@@ -129,8 +124,7 @@ struct slogic_handle *slogic_open()
 
 	libusb_set_debug(handle->context, 3);
 
-	handle->device_handle =
-	    open_device(handle->context, USB_VENDOR_ID, USB_PRODUCT_ID);
+	handle->device_handle = open_device(handle->context, USB_VENDOR_ID, USB_PRODUCT_ID);
 	if (!handle->device_handle) {
 		fprintf(stderr, "Failed to find the device\n");
 		return NULL;
@@ -177,22 +171,15 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char *out)
 	unsigned char command = 0x05;
 	int transferred;
 
-	ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				 &command, 1, &transferred, 100);
+	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &command, 1, &transferred, 100);
 	if (ret) {
-		fprintf(stderr, "libusb_bulk_transfer (out): %s\n",
-			usbutil_error_to_string(ret));
+		fprintf(stderr, "libusb_bulk_transfer (out): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 
-	ret =
-	    libusb_bulk_transfer(handle->device_handle,
-				 COMMAND_IN_ENDPOINT, out, 1,
-				 &transferred, 100);
+	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_IN_ENDPOINT, out, 1, &transferred, 100);
 	if (ret) {
-		fprintf(stderr, "libusb_bulk_transfer (in): %s\n",
-			usbutil_error_to_string(ret));
+		fprintf(stderr, "libusb_bulk_transfer (in): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 	return 0;
@@ -228,11 +215,9 @@ struct slogic_recording {
 };
 
 static struct slogic_recording *allocate_recording(struct slogic_handle *handle,
-						   uint8_t * samples,
-						   size_t recording_size)
+						   uint8_t * samples, size_t recording_size)
 {
-	struct slogic_recording *recording =
-	    malloc(sizeof(struct slogic_recording));
+	struct slogic_recording *recording = malloc(sizeof(struct slogic_recording));
 	assert(recording);
 
 	recording->samples = samples;
@@ -243,8 +228,7 @@ static struct slogic_recording *allocate_recording(struct slogic_handle *handle,
 	recording->shandle = handle;
 
 	recording->n_transfer_buffers = handle->n_transfer_buffers;
-	recording->transfers =
-	    malloc(sizeof(struct stransfer) * recording->n_transfer_buffers);
+	recording->transfers = malloc(sizeof(struct stransfer) * recording->n_transfer_buffers);
 
 	recording->failed = 0;
 
@@ -285,13 +269,11 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	    ("tcounter = %d, sample_count = %d, actual_length = %d, left=%.02f\n",
 	     tcounter, stransfer->recording->sample_count,
 	     transfer->actual_length,
-	     ((float)stransfer->recording->sample_count) /
-	     stransfer->recording->recording_size * 100);
+	     ((float)stransfer->recording->sample_count) / stransfer->recording->recording_size * 100);
 	stransfer->seq = tcounter++;
 	ret = libusb_submit_transfer(stransfer->transfer);
 	if (ret) {
-		fprintf(stderr, "libusb_submit_transfer: %s\n",
-			usbutil_error_to_string(ret));
+		fprintf(stderr, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 		return;
 	}
 }
@@ -301,16 +283,14 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
  * data is not exported yet
  */
 int slogic_read_samples(struct slogic_handle *handle,
-			struct slogic_sample_rate *sample_rate,
-			uint8_t * samples, size_t recording_size)
+			struct slogic_sample_rate *sample_rate, uint8_t * samples, size_t recording_size)
 {
 	struct libusb_transfer *transfer;
 	unsigned char *buffer;
 	int counter;
 	int ret;
 
-	struct slogic_recording *recording =
-	    allocate_recording(handle, samples, recording_size);
+	struct slogic_recording *recording = allocate_recording(handle, samples, recording_size);
 
 	fprintf(stderr, "Starting recording for %zu samples\n", recording_size);
 	fprintf(stderr, "Transfer buffers=%d, buffer size=%zu\n",
@@ -329,20 +309,16 @@ int slogic_read_samples(struct slogic_handle *handle,
 		libusb_fill_bulk_transfer(transfer, handle->device_handle,
 					  STREAMING_DATA_IN_ENDPOINT, buffer,
 					  handle->transfer_buffer_size,
-					  slogic_read_samples_callback,
-					  &recording->transfers[counter], 4);
+					  slogic_read_samples_callback, &recording->transfers[counter], 4);
 		recording->transfers[counter].recording = recording;
 		recording->transfers[counter].transfer = transfer;
 	}
 
 	for (counter = 0; counter < recording->n_transfer_buffers; counter++) {
 		recording->transfers[counter].seq = tcounter++;
-		ret =
-		    libusb_submit_transfer(recording->transfers[counter].
-					   transfer);
+		ret = libusb_submit_transfer(recording->transfers[counter].transfer);
 		if (ret) {
-			fprintf(stderr, "libusb_submit_transfer: %s\n",
-				usbutil_error_to_string(ret));
+			fprintf(stderr, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 			return ret;
 		}
 	}
@@ -352,24 +328,18 @@ int slogic_read_samples(struct slogic_handle *handle,
 	printf("pause=%d\n", sample_rate->pause);
 	unsigned char command[] = { 0x01, sample_rate->pause };
 	int transferred;
-	ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				 command, 2, &transferred, 100);
+	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, command, 2, &transferred, 100);
 	if (ret) {
-		fprintf(stderr,
-			"libusb_bulk_transfer (set streaming read mode): %s\n",
-			usbutil_error_to_string(ret));
+		fprintf(stderr, "libusb_bulk_transfer (set streaming read mode): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 	assert(transferred == 2);
 
-	while (recording->sample_count < recording->recording_size
-	       && !recording->failed) {
+	while (recording->sample_count < recording->recording_size && !recording->failed) {
 		printf("Processing events...\n");
 		ret = libusb_handle_events(handle->context);
 		if (ret) {
-			fprintf(stderr, "libusb_handle_events: %s\n",
-				usbutil_error_to_string(ret));
+			fprintf(stderr, "libusb_handle_events: %s\n", usbutil_error_to_string(ret));
 			break;
 		}
 	}

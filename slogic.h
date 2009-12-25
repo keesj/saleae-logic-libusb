@@ -5,7 +5,7 @@
 #include <libusb.h>
 
 struct slogic_sample_rate {
-	const uint8_t pause; /* sample rates are translated into delays */
+	const uint8_t pause;	/* sample rates are translated into delays */
 	const char *text;
 	const unsigned int samples_per_second;
 };
@@ -22,8 +22,7 @@ The problem here is that some it gets hard to hardcode a sample rate
 you need to iterate over the sample rates of use what you call a utility method. - KEJO
 */
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out,
-				   size_t * size);
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size);
 
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 
@@ -46,7 +45,6 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
  * data is not exported yet
  */
 int slogic_read_samples(struct slogic_handle *handle,
-			struct slogic_sample_rate *sample_rate,
-			uint8_t * samples, size_t recording_size);
+			struct slogic_sample_rate *sample_rate, uint8_t * samples, size_t recording_size);
 
 #endif
