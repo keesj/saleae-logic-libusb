@@ -97,7 +97,7 @@ int parse_args(int argc, char **argv)
 		case 'n':
 			n_samples = strtol(optarg, NULL, 10);
 			if (n_samples <= 0) {
-                                usage("Invalid number of samples, must be a " +
+                                usage("Invalid number of samples, must be a "
                                 "positive integer: %s",
 					     optarg);
                                 return 1;
