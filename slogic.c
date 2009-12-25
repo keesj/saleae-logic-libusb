@@ -1,16 +1,12 @@
 // vim: sw=8:ts=8:noexpandtab
-/* KEJO: move private headers after the putlic headers */
-/* Trygve: Why? The private header should include stuff that they need which then
- * implicitly need so I though it made sense to first let them declare what's
- * needed and then add the specifics for this file. */
 #include "slogic.h"
 #include "usbutil.h"
 #include "firmware/firmware.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 #define DEFAULT_N_TRANSFER_BUFFERS 4

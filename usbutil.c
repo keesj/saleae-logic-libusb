@@ -1,6 +1,4 @@
 // vim: sw=8:ts=8:noexpandtab
-/*KEJO: I always first include the system include and only after that include the local includes
-I don't know if this is a standard of any kind but still */
 #include "usbutil.h"
 
 #include <stdio.h>

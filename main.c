@@ -1,4 +1,7 @@
 // vim: sw=8:ts=8:noexpandtab
+#include "slogic.h"
+#include "usbutil.h"
+
 #include <assert.h>
 #include <libusb.h>
 #include <stdarg.h>
@@ -6,9 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "slogic.h"
-#include "usbutil.h"
 
 /* Command line arguments */
 
@@ -21,6 +21,8 @@ variables.
 The interfacing with with the slogic API will be though the slogic_handle and
 slogic_recording which should facilitate multi-threaded applications and
 logical grouping of parameters. */
+
+/* Ok  - KEJO */
 struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
 size_t n_samples = 0;
@@ -56,6 +58,7 @@ void usage(const char *message, ...)
 /* with only 80 in indent the code gets to insanely hard to read so I did some
 manual breaking of the lines to make it as easy to read as possible. I
 wouldn't mind switching to at least 120 character wide lines */
+/* OK 120 is fine - KEJO */
 		fprintf(stderr, "usage: %s -f <output file> -r <sample rate> "
 			"[-n <number of samples>]\n", me);
 		fprintf(stderr, "\n");
@@ -157,25 +160,17 @@ int parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	if (!parse_args(argc, argv)) {
-/* KEJO: read man 3 exit, EXIT_FAILURE is to be passed as argument to the exit() method */
-/* Trygve: From what I know the runtime environment that execute main() is
-guaranteed to call exit() with the return value so this should be ok. */
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
 /* KEJO: the slogic_open should not perform the firmware uploading the hanlding should still be here */
 /* Tryve: Why? It would be a pain for every user to have to handle the uploading of the firmware.
 To be able to use the rest of the API (which basically are the sampling methods)
-you would need a (compatible) firmware to be uploaded before usage.
+you would need a (compatible) firmware to be uploaded before usage. */
 
-If you *do* want to be able to control the firmware I suggest we make that
-possible but not the default behaviour. Perhaps we can pass in a byte array
-which contain the firmware to use? Or perhaps a completely separate/lower
-level API that connects to the logic.
-
-Other features that has to go into the open call is at least support for
-multiple logics. It would be awesome to support two Logic's at the same time,
-both in a reader+writer setup and as a 16-bit logic analyzer. */
+/* does firmware upload work for you? I guess not. to upload the firmware we need
+to connmect to an other VENDOR/PRODUCT. it really deserves special hanling also because we currently fail 
+to first upload and continue */
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 
@@ -190,5 +185,5 @@ both in a reader+writer setup and as a 16-bit logic analyzer. */
 
 	slogic_close(handle);
 
-	return EXIT_SUCCESS;
+	exit(EXIT_SUCCESS);
 }
