@@ -5,6 +5,12 @@
 #include <libusb.h>
 
 /* KEJO: the name of the struct and it's content doesn't seam to match */
+/* Trygve: To the user these are what they think about as a sample
+rate. The "pause" field is definitely implementation specific which
+is why I first had it as an internal-only struct but as the text
+was useful for usage() it went public. How about creating a public
+sample_logic which is referenced from an internal one? That way it
+would be easier to swap the underlying implementation. */
 struct slogic_sample_rate {
 	const uint8_t pause;
 	const char *text;
@@ -33,9 +39,12 @@ enum sample_rates {
 }
 
 I would really dump the tow method bellow, it not "critical" to the lib so 
-just drop it to put it somewhere in the main.c
-*/
+just drop it to put it somewhere in the main.c - KEJO
 
+These are reusable utility methods which I think it not a part of the "core"
+api, but something that a many consumers of a library would like to use so I'd
+like to keep them. - Trygve
+*/
 
 void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out,
 				   size_t * size);

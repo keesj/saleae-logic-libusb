@@ -1,5 +1,8 @@
 // vim: sw=8:ts=8:noexpandtab
 /* KEJO: move private headers after the putlic headers */
+/* Trygve: Why? The private header should include stuff that they need which then
+ * implicitly need so I though it made sense to first let them declare what's
+ * needed and then add the specifics for this file. */
 #include "slogic.h"
 #include "usbutil.h"
 #include "firmware/firmware.h"
@@ -339,8 +342,8 @@ int slogic_read_samples(struct slogic_handle *handle,
 	for (counter = 0; counter < recording->n_transfer_buffers; counter++) {
 		recording->transfers[counter].seq = tcounter++;
 		ret =
-		    libusb_submit_transfer(recording->
-					   transfers[counter].transfer);
+		    libusb_submit_transfer(recording->transfers[counter].
+					   transfer);
 		if (ret) {
 			fprintf(stderr, "libusb_submit_transfer: %s\n",
 				usbutil_error_to_string(ret));
