@@ -29,6 +29,7 @@ void short_usage(const char *message, ...)
 	char p[1024];
 	va_list ap;
 
+	fprintf(stderr, "usage: %s -f <output file> -r <sample rate> [-n <number of samples>] [-h ] \n\n", me);
 	va_start(ap, message);
 	(void)vsnprintf(p, 1024, message, ap);
 	va_end(ap);
@@ -48,9 +49,9 @@ void full_usage()
 	fprintf(stderr, " -n: Number of samples to record\n");
 	fprintf(stderr, "     Defaults to one second of samples for the specified sample rate\n");
 	fprintf(stderr, " -f: The output file. Using '-' means that the bytes will be output to stdout.\n");
+	fprintf(stderr, " -h: This help message.\n");
 	fprintf(stderr, " -r: Select sample rate for the Logic.\n");
 	fprintf(stderr, "     Available sample rates:\n");
-	fprintf(stderr, " -h: This help message.\n");
 	for (i = 0; i < n_sample_rates; i++, sample_rates++) {
 		fprintf(stderr, "      o %s\n", sample_rates->text);
 	}
