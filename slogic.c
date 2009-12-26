@@ -1,20 +1,20 @@
 // vim: sw=8:ts=8:noexpandtab
+#include "firmware/firmware.h"
 #include "slogic.h"
 #include "usbutil.h"
-#include "firmware/firmware.h"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define DEFAULT_N_TRANSFER_BUFFERS 4
 #define DEFAULT_TRANSFER_BUFFER_SIZE (4 * 1024)
 #define DEFAULT_TRANSFER_TIMEOUT 1000
 
-/* 
+/*
  * define EP1 OUT , EP1 IN, EP2 IN and EP6 OUT
  */
 #define COMMAND_OUT_ENDPOINT 0x01
@@ -22,7 +22,7 @@
 #define STREAMING_DATA_IN_ENDPOINT 0x82
 #define STREAMING_DATA_OUT_ENDPOINT 0x06
 
-//Bus 006 Device 006: ID 0925:3881 Lakeview Research
+/* Bus 006 Device 006: ID 0925:3881 Lakeview Research */
 #define USB_VENDOR_ID 0x0925
 #define USB_PRODUCT_ID 0x3881
 
@@ -33,13 +33,12 @@ struct slogic_handle {
 	size_t transfer_buffer_size;
 	int n_transfer_buffers;
 	unsigned int transfer_timeout;
-	FILE* debug_file;
+	FILE *debug_file;
 };
 
 /*
  * Sample Rates
  */
-/* KEJO: move to the public header */
 struct slogic_sample_rate sample_rates[] = {
 	{1, "24MHz", 24000000},
 	{2, "16MHz", 16000000},
@@ -55,7 +54,7 @@ struct slogic_sample_rate sample_rates[] = {
 
 static const int n_sample_rates = sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size)
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t *size)
 {
 	*sample_rates_out = sample_rates;
 	*size = n_sample_rates;
@@ -86,18 +85,15 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 	int data_start;
 	int cmd_size = 3;
 	int cmd_count = slogic_firm_cmds_size() / sizeof(*slogic_firm_cmds) / cmd_size;
+	int timeout = 4;
 
 	current = slogic_firm_cmds;
 	data_start = 0;
 	for (counter = 0; counter < cmd_count; counter++) {
-		/* int libusb_control_transfer(libusb_device_handle *dev_handle,
-		 * int8_t request_type, uint8_t request, uint16_t value, uint16_t index,
-		 * unsigned char *data, uint16_t length, unsigned int timeout); 
-		 */
 		libusb_control_transfer(handle->device_handle, 0x40, 0XA0,
 					current[INDEX_CMD_REQUEST],
 					current[INDEX_CMD_VALUE],
-					&slogic_firm_data[data_start], current[INDEX_PAYLOAD_SIZE], 4);
+					&slogic_firm_data[data_start], current[INDEX_PAYLOAD_SIZE], timeout);
 		data_start += current[2];
 		current += cmd_size;
 	}
@@ -105,14 +101,12 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 }
 
 /* return 1 if the firmware is uploaded 0 if not */
-int slogic_is_firmware_uploaded(struct slogic_handle *handle)
+static bool slogic_is_firmware_uploaded(struct slogic_handle *handle)
 {
 	/* just try to perform a normal read, if this fails we assume the firmware is not uploaded */
 	unsigned char out_byte = 0x05;
 	int transferred;
-	int ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				       &out_byte, 1,
-				       &transferred, 100);
+	int ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &out_byte, 1, &transferred, 100);
 	return ret == 0;	/* probably the firmware is uploaded */
 }
 
@@ -136,11 +130,9 @@ struct slogic_handle *slogic_open()
 
 	handle->device_handle = open_device(handle->context, USB_VENDOR_ID, USB_PRODUCT_ID);
 	if (!handle->device_handle) {
-//		fprintf(stderr, "Failed to find the device\n");
 		return NULL;
 	}
 	if (!slogic_is_firmware_uploaded(handle)) {
-//		fprintf(stderr, "Uploading firmware restart program\n");
 		slogic_upload_firmware(handle);
 		libusb_close(handle->device_handle);
 		libusb_exit(handle->context);
@@ -157,17 +149,14 @@ void slogic_close(struct slogic_handle *handle)
 	free(handle);
 }
 
-void slogic_tune(struct slogic_handle *handle, FILE* debug_file,
-		size_t transfer_buffer_size,
-		unsigned int n_transfer_buffers,
-		unsigned int transfer_timeout,
-		int libusb_debug_level)
+void slogic_tune(struct slogic_handle *handle, FILE *debug_file, size_t transfer_buffer_size,
+		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level)
 {
 	assert(handle);
 
-	// TODO: Add validation that these values are sane. If not, don't modify but return an error.
+	/* TODO: Add validation that these values are sane. If not, don't modify but return an error. */
 
-	if(debug_file) {
+	if (debug_file) {
 		handle->debug_file = debug_file;
 	}
 
@@ -217,7 +206,7 @@ struct stransfer {
 
 struct slogic_internal_recording {
 	/* A reference to the user's part of the recording */
-	struct slogic_recording* recording;
+	struct slogic_recording *recording;
 
 	/* Number of samples collected so far */
 	int sample_count;
@@ -233,9 +222,8 @@ struct slogic_internal_recording {
 	bool done;
 };
 
-static struct slogic_internal_recording *allocate_internal_recording(
-		struct slogic_handle *handle,
-		struct slogic_recording *recording)
+static struct slogic_internal_recording *allocate_internal_recording(struct slogic_handle *handle,
+								     struct slogic_recording *recording)
 {
 	struct slogic_internal_recording *internal_recording = malloc(sizeof(struct slogic_internal_recording));
 	assert(internal_recording);
@@ -259,9 +247,11 @@ static void free_internal_recording(struct slogic_internal_recording *internal_r
 	free(internal_recording);
 }
 
-/* Is some kind of synchronization required here? libusb is not supposed to
+/*
+ * Is some kind of synchronization required here? libusb is not supposed to
  * create its own threads, but I've seen mentions of an event thread in debug
- * output - trygve */
+ * output - Trygve
+ */
 void slogic_read_samples_callback(struct libusb_transfer *transfer)
 {
 	struct stransfer *stransfer = transfer->user_data;
@@ -269,23 +259,28 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	struct slogic_recording *recording = internal_recording->recording;
 	assert(stransfer);
 
-	if(internal_recording->recording->recording_state != RUNNING) {
-		/* This will happen if there was more incoming transfers when the callback wanted to stop recording. The outer method will handle the cleanup so just return here. */
+	if (internal_recording->recording->recording_state != RUNNING) {
+		/*
+		 * This will happen if there was more incoming transfers when the
+		 * callback wanted to stop recording. The outer method will handle
+		 * the cleanup so just return here.
+		 */
 		return;
 	}
 
 	stransfer->internal_recording->transfer_counter++;
 
-	/* 
-	 Handle the success as a special case, the failure logic is basically: abort.
-	 Note that this does not indicate that the entire amount of requested data was transferred.
+	/*
+	 * Handle the success as a special case, the failure logic is basically: abort.
+	 * Note that this does not indicate that the entire amount of requested data was transferred.
 	 */
-	if(transfer->status == LIBUSB_TRANSFER_COMPLETED) {
+	if (transfer->status == LIBUSB_TRANSFER_COMPLETED) {
 		internal_recording->sample_count += transfer->actual_length;
 
-		bool more = recording->on_data_callback(transfer->buffer, transfer->actual_length, recording->user_data);
+		bool more =
+		    recording->on_data_callback(transfer->buffer, transfer->actual_length, recording->user_data);
 
-		if(!more) {
+		if (!more) {
 			internal_recording->recording->recording_state = COMPLETED_SUCCESSFULLY;
 			internal_recording->done = true;
 			fprintf(internal_recording->recording->debug_file, "Callback signalled completion\n");
@@ -303,43 +298,44 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 			return;
 		}
 
-		fprintf(internal_recording->recording->debug_file, "Rescheduled transfer %d as %d\n", old_seq, stransfer->seq);
+		fprintf(internal_recording->recording->debug_file, "Rescheduled transfer %d as %d\n", old_seq,
+			stransfer->seq);
 		return;
 	}
 
 	internal_recording->done = true;
 
-	switch(transfer->status) {
-		default:
+	switch (transfer->status) {
+	default:
 		/* Make the compiler shut up */
-		case LIBUSB_TRANSFER_COMPLETED:
+	case LIBUSB_TRANSFER_COMPLETED:
 		/*
-		 For bulk/interrupt endpoints: halt condition detected (endpoint stalled). 
-		 For control endpoints: control request not supported. 
-		 This shouldn't happen.
+		 * This shouldn't happen in slogic.
+		 * From libusb docs:
+		 * For bulk/interrupt endpoints: halt condition detected (endpoint stalled).
+		 * For control endpoints: control request not supported.
 		 */
-	 	case LIBUSB_TRANSFER_STALL:
+	case LIBUSB_TRANSFER_STALL:
 		/* We don't cancel transfers without setting should_run = 0 so this should not happen */
-	 	case LIBUSB_TRANSFER_CANCELLED:
-		case LIBUSB_TRANSFER_ERROR:
-			internal_recording->recording->recording_state = UNKNOWN;
-			break;
-	 	case LIBUSB_TRANSFER_TIMED_OUT:
-			internal_recording->recording->recording_state = TIMEOUT;
-			break;
-		case LIBUSB_TRANSFER_NO_DEVICE:
-			internal_recording->recording->recording_state = DEVICE_GONE;
-			break;
-		case LIBUSB_TRANSFER_OVERFLOW:
-			internal_recording->recording->recording_state = OVERFLOW;
-			break;
+	case LIBUSB_TRANSFER_CANCELLED:
+	case LIBUSB_TRANSFER_ERROR:
+		internal_recording->recording->recording_state = UNKNOWN;
+		break;
+	case LIBUSB_TRANSFER_TIMED_OUT:
+		internal_recording->recording->recording_state = TIMEOUT;
+		break;
+	case LIBUSB_TRANSFER_NO_DEVICE:
+		internal_recording->recording->recording_state = DEVICE_GONE;
+		break;
+	case LIBUSB_TRANSFER_OVERFLOW:
+		internal_recording->recording->recording_state = OVERFLOW;
+		break;
 	}
 }
 
-void slogic_execute_recording(struct slogic_handle *handle,
-	struct slogic_recording *recording)
+void slogic_execute_recording(struct slogic_handle *handle, struct slogic_recording *recording)
 {
-	// TODO: validate recording
+	/* TODO: validate recording */
 
 	struct libusb_transfer *transfer;
 	unsigned char *buffer;
@@ -348,11 +344,14 @@ void slogic_execute_recording(struct slogic_handle *handle,
 
 	struct slogic_internal_recording *internal_recording = allocate_internal_recording(handle, recording);
 
-	/* TODO: We probably want to tune the transfer buffer size to a sane
+	/*
+	 * TODO: We probably want to tune the transfer buffer size to a sane
 	 * default based on the sampling rate. If transfer_buffer_size is
 	 * samples per second / 10 we can expect 10 transfers per second which
 	 * should be sufficient for a user application to be responsive while
-	 * not having too many transfers per second. - trygve */
+	 * not having too many transfers per second.
+	 *  - Trygve
+	 */
 
 	fprintf(recording->debug_file, "Starting recording...\n");
 	fprintf(recording->debug_file, "Transfer buffers:     %d\n", internal_recording->n_transfer_buffers);
@@ -374,8 +373,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 					  STREAMING_DATA_IN_ENDPOINT, buffer,
 					  handle->transfer_buffer_size,
 					  slogic_read_samples_callback,
-					  &internal_recording->transfers[counter],
-					  handle->transfer_timeout);
+					  &internal_recording->transfers[counter], handle->transfer_timeout);
 		internal_recording->transfers[counter].internal_recording = internal_recording;
 		internal_recording->transfers[counter].transfer = transfer;
 	}
@@ -383,12 +381,9 @@ void slogic_execute_recording(struct slogic_handle *handle,
 	/* Submit all transfers */
 	for (counter = 0; counter < internal_recording->n_transfer_buffers; counter++) {
 		internal_recording->transfers[counter].seq = tcounter++;
-		ret =
-		    libusb_submit_transfer(internal_recording->transfers[counter].
-					   transfer);
+		ret = libusb_submit_transfer(internal_recording->transfers[counter].transfer);
 		if (ret) {
-			fprintf(recording->debug_file, "libusb_submit_transfer: %s\n",
-				usbutil_error_to_string(ret));
+			fprintf(recording->debug_file, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 			recording->recording_state = UNKNOWN;
 			return;
 		}
@@ -401,8 +396,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 	int transferred;
 	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, command, 2, &transferred, 100);
 	if (ret) {
-		fprintf(recording->debug_file,
-			"libusb_bulk_transfer (set streaming read mode): %s\n",
+		fprintf(recording->debug_file, "libusb_bulk_transfer (set streaming read mode): %s\n",
 			usbutil_error_to_string(ret));
 		recording->recording_state = UNKNOWN;
 		return;
@@ -412,7 +406,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 	struct timeval start;
 	assert(gettimeofday(&start, NULL) == 0);
 
-	struct timeval timeout = {1, 0};
+	struct timeval timeout = { 1, 0 };
 	while (!internal_recording->done) {
 		fprintf(recording->debug_file, "Processing events...\n");
 		ret = libusb_handle_events_timeout(handle->context, &timeout);
@@ -433,8 +427,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 
 	if (internal_recording->recording->recording_state != COMPLETED_SUCCESSFULLY) {
 		fprintf(recording->debug_file, "FAIL!\n");
-	}
-	else {
+	} else {
 		fprintf(recording->debug_file, "SUCCESS!\n");
 	}
 
@@ -443,14 +436,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 
 	fprintf(recording->debug_file, "Time elapsed: %ds %dus\n", (int)start.tv_sec, (int)start.tv_usec);
 	fprintf(recording->debug_file, "Time elapsed: %ds %dus\n", (int)end.tv_sec, (int)end.tv_usec);
-	// 10.20 - 11.10 = 0.50
 	int sec = end.tv_sec - start.tv_sec;
-//	int usec = end.tv_usec - start.tv_usec;
-//	if(usec < 0) {
-//		usec = -usec;
-//		sec--;
-//	}
-//	int sec = (end.tv_usec - start.tv_usec) / 1000;
 	int usec = (end.tv_usec - start.tv_usec) / 1000;
 	fprintf(recording->debug_file, "Time elapsed: %ds %dms\n", sec, usec);
 

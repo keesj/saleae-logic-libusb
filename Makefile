@@ -2,11 +2,13 @@ sinclude Makefile.local
 
 CFLAGS ?= -g
 CFLAGS += -Wall
+CFLAGS += `$(PKG_CONFIG) --cflags $(PKGS)`
+LDLIBS += `$(PKG_CONFIG) --libs $(PKGS)`
 
 PKG_CONFIG ?= pkg-config
 PKGS = libusb-1.0
-CFLAGS += `$(PKG_CONFIG) --cflags $(PKGS)`
-LDLIBS += `$(PKG_CONFIG) --libs $(PKGS)`
+
+INDENT ?= indent
 
 all: main
 
@@ -23,7 +25,7 @@ clean:
 	rm -rf main .deps $(wildcard *.o *~)
 
 indent:
-	indent -npro -kr -i8 -ts8 -sob -l120 -ss -ncs -cp1 $(wildcard *.c *.h)
+	$(INDENT) -npro -kr -i8 -ts8 -sob -l120 -ss -ncs -cp1 $(wildcard *.c *.h)
 
 sinclude .deps
 .deps: $(wildcard *.h)
