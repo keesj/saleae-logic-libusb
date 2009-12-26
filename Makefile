@@ -1,3 +1,4 @@
+# vim: noexpandtab
 sinclude Makefile.local
 
 CFLAGS ?= -g
@@ -27,7 +28,14 @@ clean:
 indent:
 	$(INDENT) -npro -kr -i8 -ts8 -sob -l120 -ss -ncs -cp1 $(wildcard *.c *.h)
 
+# It would be awesome if git should just spit out a UTC formatted string - trygve
+dist:
+	date=`git log --date=iso --pretty="format:%ci"|sed -n -e "s,\(....\)-\(..\)-\(..\) \(..\):\(..\).*,\1\2\3-\4\5," -e 1p`; \
+	git archive --prefix=saleae-logic-libusb-$$date/ HEAD | bzip2 > ../saleae-logic-libusb-$$date.tar.bz2
+
 sinclude .deps
 .deps: $(wildcard *.h)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c > .deps
 	$(MAKE) -C firmware .deps
+
+.PHONY: dist all run
