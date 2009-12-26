@@ -1,17 +1,13 @@
 // vim: sw=8:ts=8:noexpandtab
-/* KEJO: move private headers after the putlic headers */
-/* Trygve: Why? The private header should include stuff that they need which then
- * implicitly need so I though it made sense to first let them declare what's
- * needed and then add the specifics for this file. */
 #include "slogic.h"
 #include "usbutil.h"
 #include "firmware/firmware.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 #define DEFAULT_N_TRANSFER_BUFFERS 4
@@ -57,11 +53,9 @@ struct slogic_sample_rate sample_rates[] = {
 	{239, "200kHz", 200000},
 };
 
-static const int n_sample_rates =
-    sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
+static const int n_sample_rates = sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out,
-				   size_t * size)
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size)
 {
 	*sample_rates_out = sample_rates;
 	*size = n_sample_rates;
@@ -91,8 +85,7 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 	unsigned int *current;
 	int data_start;
 	int cmd_size = 3;
-	int cmd_count =
-	    slogic_firm_cmds_size() / sizeof(*slogic_firm_cmds) / cmd_size;
+	int cmd_count = slogic_firm_cmds_size() / sizeof(*slogic_firm_cmds) / cmd_size;
 
 	current = slogic_firm_cmds;
 	data_start = 0;
@@ -104,8 +97,7 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 		libusb_control_transfer(handle->device_handle, 0x40, 0XA0,
 					current[INDEX_CMD_REQUEST],
 					current[INDEX_CMD_VALUE],
-					&slogic_firm_data[data_start],
-					current[INDEX_PAYLOAD_SIZE], 4);
+					&slogic_firm_data[data_start], current[INDEX_PAYLOAD_SIZE], 4);
 		data_start += current[2];
 		current += cmd_size;
 	}
@@ -118,10 +110,9 @@ int slogic_is_firmware_uploaded(struct slogic_handle *handle)
 	/* just try to perform a normal read, if this fails we assume the firmware is not uploaded */
 	unsigned char out_byte = 0x05;
 	int transferred;
-	int ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				 &out_byte, 1,
-				 &transferred, 100);
+	int ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
+				       &out_byte, 1,
+				       &transferred, 100);
 	return ret == 0;	/* probably the firmware is uploaded */
 }
 
@@ -143,8 +134,7 @@ struct slogic_handle *slogic_open()
 
 	libusb_set_debug(handle->context, 3);
 
-	handle->device_handle =
-	    open_device(handle->context, USB_VENDOR_ID, USB_PRODUCT_ID);
+	handle->device_handle = open_device(handle->context, USB_VENDOR_ID, USB_PRODUCT_ID);
 	if (!handle->device_handle) {
 //		fprintf(stderr, "Failed to find the device\n");
 		return NULL;
@@ -202,22 +192,15 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char *out)
 	unsigned char command = 0x05;
 	int transferred;
 
-	ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				 &command, 1, &transferred, 100);
+	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &command, 1, &transferred, 100);
 	if (ret) {
-		fprintf(handle->debug_file, "libusb_bulk_transfer (out): %s\n",
-			usbutil_error_to_string(ret));
+		fprintf(handle->debug_file, "libusb_bulk_transfer (out): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 
-	ret =
-	    libusb_bulk_transfer(handle->device_handle,
-				 COMMAND_IN_ENDPOINT, out, 1,
-				 &transferred, 100);
+	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_IN_ENDPOINT, out, 1, &transferred, 100);
 	if (ret) {
-		fprintf(handle->debug_file, "libusb_bulk_transfer (in): %s\n",
-			usbutil_error_to_string(ret));
+		fprintf(handle->debug_file, "libusb_bulk_transfer (in): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 	return 0;
@@ -254,8 +237,7 @@ static struct slogic_internal_recording *allocate_internal_recording(
 		struct slogic_handle *handle,
 		struct slogic_recording *recording)
 {
-	struct slogic_internal_recording *internal_recording =
-	    malloc(sizeof(struct slogic_internal_recording));
+	struct slogic_internal_recording *internal_recording = malloc(sizeof(struct slogic_internal_recording));
 	assert(internal_recording);
 
 	internal_recording->recording = recording;
@@ -264,8 +246,7 @@ static struct slogic_internal_recording *allocate_internal_recording(
 	internal_recording->shandle = handle;
 
 	internal_recording->n_transfer_buffers = handle->n_transfer_buffers;
-	internal_recording->transfers =
-	    malloc(sizeof(struct stransfer) * internal_recording->n_transfer_buffers);
+	internal_recording->transfers = malloc(sizeof(struct stransfer) * internal_recording->n_transfer_buffers);
 
 	internal_recording->done = false;
 
@@ -365,8 +346,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 	int counter;
 	int ret;
 
-	struct slogic_internal_recording *internal_recording =
-	    allocate_internal_recording(handle, recording);
+	struct slogic_internal_recording *internal_recording = allocate_internal_recording(handle, recording);
 
 	/* TODO: We probably want to tune the transfer buffer size to a sane
 	 * default based on the sampling rate. If transfer_buffer_size is
@@ -419,9 +399,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 	fprintf(recording->debug_file, "pause=%d\n", recording->sample_rate->pause);
 	unsigned char command[] = { 0x01, recording->sample_rate->pause };
 	int transferred;
-	ret =
-	    libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT,
-				 command, 2, &transferred, 100);
+	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, command, 2, &transferred, 100);
 	if (ret) {
 		fprintf(recording->debug_file,
 			"libusb_bulk_transfer (set streaming read mode): %s\n",
@@ -439,8 +417,7 @@ void slogic_execute_recording(struct slogic_handle *handle,
 		fprintf(recording->debug_file, "Processing events...\n");
 		ret = libusb_handle_events_timeout(handle->context, &timeout);
 		if (ret) {
-			fprintf(recording->debug_file, "libusb_handle_events: %s\n",
-				usbutil_error_to_string(ret));
+			fprintf(recording->debug_file, "libusb_handle_events: %s\n", usbutil_error_to_string(ret));
 			break;
 		}
 	}

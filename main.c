@@ -1,14 +1,15 @@
 // vim: sw=8:ts=8:noexpandtab
+#include "slogic.h"
+#include "usbutil.h"
+
 #include <assert.h>
 #include <libusb.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "slogic.h"
-#include "usbutil.h"
 
 /* Command line arguments */
 
@@ -21,6 +22,8 @@ variables.
 The interfacing with with the slogic API will be though the slogic_handle and
 slogic_recording which should facilitate multi-threaded applications and
 logical grouping of parameters. */
+
+/* Ok  - KEJO */
 struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
 size_t n_samples = 0;
@@ -53,18 +56,11 @@ void usage(const char *message, ...)
 	} else {
 		slogic_available_sample_rates(&sample_rates, &n_sample_rates);
 
-/* using the + is a c++/java thingy we let the pre processor do it */
-/* with only 80 in indent the code gets to insanely hard to read so I did some
-manual breaking of the lines to make it as easy to read as possible. I
-wouldn't mind switching to at least 120 character wide lines */
-		fprintf(stderr, "usage: %s -f <output file> -r <sample rate> "
-			"[-n <number of samples>]\n", me);
+		fprintf(stderr, "usage: %s -f <output file> -r <sample rate> [-n <number of samples>]\n", me);
 		fprintf(stderr, "\n");
 		fprintf(stderr, " -n: Number of samples to record\n");
-		fprintf(stderr, "     Defaults to one second of samples for the "
-			"specified sample rate\n");
-		fprintf(stderr, " -f: The output file. Using '-' means that the "
-			"bytes will be output to stdout.\n");
+		fprintf(stderr, "     Defaults to one second of samples for the specified sample rate\n");
+		fprintf(stderr, " -f: The output file. Using '-' means that the bytes will be output to stdout.\n");
 		fprintf(stderr, " -r: Select sample rate for the Logic.\n");
 		fprintf(stderr, "     Available sample rates:\n");
 		for (i = 0; i < n_sample_rates; i++, sample_rates++) {
@@ -75,13 +71,13 @@ wouldn't mind switching to at least 120 character wide lines */
 		fprintf(stderr, " -b: Transfer buffer size.\n");
 		fprintf(stderr, " -t: Number of transfer buffers.\n");
 		fprintf(stderr, " -o: Transfer timeout.\n");
-		fprintf(stderr, " -u: libusb debug level: 0 to 3, 3 is most verbose. "
-			"Defaults to '0'.\n");
+		fprintf(stderr, " -u: libusb debug level: 0 to 3, 3 is most verbose. Defaults to '0'.\n");
 		fprintf(stderr, "\n");
 	}
 }
 
-int parse_args(int argc, char **argv)
+/* Returns true if everything was OK */
+bool parse_args(int argc, char **argv)
 {
 	char c;
 	char* endptr;
@@ -91,7 +87,7 @@ int parse_args(int argc, char **argv)
 			sample_rate = slogic_parse_sample_rate(optarg);
 			if (!sample_rate) {
 				usage("Invalid sample rate: %s", optarg);
-				return 0;
+				return false;
 			}
 			break;
 		case 'f':
@@ -100,73 +96,86 @@ int parse_args(int argc, char **argv)
 		case 'n':
 			n_samples = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0' || n_samples <= 0) {
-                                usage("Invalid number of samples, must be a "
-                                "positive integer: %s",
+                                usage("Invalid number of samples, must be a positive integer: %s",
 					     optarg);
-                                return 0;
+                                return false;
 			}
 			break;
 		case 'b':
 			transfer_buffer_size = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0' || transfer_buffer_size <= 0) {
-				usage("Invalid transfer buffer size, "
-					     "must be a positive integer: %s",
+				usage("Invalid transfer buffer size, must be a positive integer: %s",
 					     optarg);
-                                return 0;
+                                return false;
 			}
 			break;
 		case 't':
 			n_transfer_buffers = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0' || n_transfer_buffers <= 0) {
-				usage("Invalid transfer buffer size, "
-					     "must be a positive integer: %s",
+				usage("Invalid transfer buffer size, must be a positive integer: %s",
 					     optarg);
-                                return 0;
+                                return false;
 			}
 			break;
 		case 'o':
 			transfer_timeout = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0' || transfer_timeout <= 0) {
-				usage("Invalid transfer timeout, "
-					     "must be a positive integer: %s",
+				usage("Invalid transfer timeout, must be a positive integer: %s",
 					     optarg);
-                                return 0;
+                                return false;
+			n_samples = strtol(optarg, NULL, 10);
+			if (n_samples <= 0) {
+				usage("Invalid number of samples, must be a positive integer: %s", optarg);
+				return false;
+			}
+			break;
+		case 'b':
+			transfer_buffer_size = strtol(optarg, NULL, 10);
+			if (transfer_buffer_size <= 0) {
+				usage("Invalid transfer buffer size, must be a positive integer: %s", optarg);
+				return false;
+			}
+			break;
+		case 't':
+			n_transfer_buffers = strtol(optarg, NULL, 10);
+			if (n_transfer_buffers <= 0) {
+				usage("Invalid transfer buffer size, must be a positive integer: %s", optarg);
+				return false;
 			}
 			break;
 		case 'u':
 			libusb_debug_level = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0' || libusb_debug_level < 0 || libusb_debug_level > 3) {
-				usage("Invalid libusb debug level, "
-					     "must be a positive integer between 0 and 3: %s",
+				usage("Invalid libusb debug level, must be a positive integer between 0 and 3: %s",
 					     optarg);
-                                return 0;
+				return false;
 			}
 			break;
 		case 'h':
 			usage(NULL);
-                        return 0;
+                        return false;
 		default:
 		case '?':
 			usage("Unknown argument: %c. Use %s -h for usage example.", optopt, me);
-                        return 0;
+                        return false;
 		}
 	}
 
 	if (!output_file_name) {
 		usage("An output file has to be specified.", optarg);
-                return 0;
+                return false;
 	}
 
 	if (!sample_rate) {
 		usage("A sample rate has to be specified.", optarg);
-                return 0;
+                return false;
 	}
 
 	if (!n_samples) {
 		n_samples = sample_rate->samples_per_second;
 	}
 
-	return 1;
+	return true;
 }
 
 int count = 0;
@@ -183,29 +192,22 @@ bool on_data_callback(uint8_t* data, size_t size, void* user_data)
 int main(int argc, char **argv)
 {
 	if (!parse_args(argc, argv)) {
-/* KEJO: read man 3 exit, EXIT_FAILURE is to be passed as argument to the exit() method */
-/* Trygve: From what I know the runtime environment that execute main() is
-guaranteed to call exit() with the return value so this should be ok. */
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
 /* KEJO: the slogic_open should not perform the firmware uploading the hanlding should still be here */
 /* Tryve: Why? It would be a pain for every user to have to handle the uploading of the firmware.
 To be able to use the rest of the API (which basically are the sampling methods)
-you would need a (compatible) firmware to be uploaded before usage.
+you would need a (compatible) firmware to be uploaded before usage. */
 
-If you *do* want to be able to control the firmware I suggest we make that
-possible but not the default behaviour. Perhaps we can pass in a byte array
-which contain the firmware to use? Or perhaps a completely separate/lower
-level API that connects to the logic.
-
-Other features that has to go into the open call is at least support for
-multiple logics. It would be awesome to support two Logic's at the same time,
-both in a reader+writer setup and as a 16-bit logic analyzer. */
+/* does firmware upload work for you? I guess not. to upload the firmware we need
+to connmect to an other VENDOR/PRODUCT. it really deserves special hanling also because we currently fail 
+to first upload and continue */
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 
-	slogic_tune(handle, stderr,
+	slogic_tune(handle,
+			stderr,
 			transfer_buffer_size,
 			n_transfer_buffers,
 			transfer_timeout,
@@ -229,8 +231,6 @@ both in a reader+writer setup and as a 16-bit logic analyzer. */
 	slogic_execute_recording(handle, &recording);
 
 	slogic_close(handle);
-
-	fprintf(stderr, "slogic_execute_recording: %d\n", recording.recording_state);
 
 	exit(EXIT_SUCCESS);
 }
