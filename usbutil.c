@@ -224,6 +224,28 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id,
 	return device_handle;
 }
 
+const char *libusb_transfer_status_to_string(enum libusb_transfer_status transfer_status)
+{
+	switch(transfer_status) {
+	case LIBUSB_TRANSFER_COMPLETED:
+		return "Completed.";
+	case LIBUSB_TRANSFER_ERROR:
+		return "Error.";
+	case LIBUSB_TRANSFER_TIMED_OUT:
+		return "Timeout.";
+	case LIBUSB_TRANSFER_CANCELLED:
+		return "Cancelled.";
+	case LIBUSB_TRANSFER_STALL:
+		return "Stalled.";
+	case LIBUSB_TRANSFER_NO_DEVICE:
+		return "No device.";
+	case LIBUSB_TRANSFER_OVERFLOW:
+		return "Overflow.";
+	default:
+		return "libusb_transfer_status: Unkown.";
+	}
+}
+
 const char *usbutil_error_to_string(enum libusb_error error)
 {
 	switch (error) {
@@ -256,6 +278,6 @@ const char *usbutil_error_to_string(enum libusb_error error)
 	case LIBUSB_ERROR_OTHER:
 		return "LIBUSB_ERROR_OTHER";
 	default:
-		return "libusb: Unknown error";
+		return "libusb_error: Unknown error";
 	}
 }

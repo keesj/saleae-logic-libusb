@@ -2,7 +2,3 @@ o When starting up and the device is connected, reset it somehow. If stuff
   fails the next run will fail with a timeout. - Trygve
 
 o Add a ctrl-c handler which shuts down all transfers and closes libusb. - Trygve
-
-o Refactor the sampling part of the API to 
- 1) use a callback that gets called with a data buffer
- 2) take a single struct argument

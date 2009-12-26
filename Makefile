@@ -26,6 +26,6 @@ indent:
 	Lindent $(wildcard *.c *.h)
 
 sinclude .deps
-.deps: $(wildcard *.c) $(wildcard *.h)
+.deps: $(wildcard *.h)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c > .deps
 	$(MAKE) -C firmware .deps

@@ -25,8 +25,9 @@ struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
 size_t n_samples = 0;
 size_t transfer_buffer_size = 0;
-int n_transfer_buffers = 0;
-int libusb_debug_level = 0;
+size_t n_transfer_buffers = 0;
+size_t libusb_debug_level = 0;
+unsigned int transfer_timeout = 0;
 
 const char *me = "main";
 
@@ -73,6 +74,7 @@ wouldn't mind switching to at least 120 character wide lines */
 		fprintf(stderr, "Advanced options:\n");
 		fprintf(stderr, " -b: Transfer buffer size.\n");
 		fprintf(stderr, " -t: Number of transfer buffers.\n");
+		fprintf(stderr, " -o: Transfer timeout.\n");
 		fprintf(stderr, " -u: libusb debug level: 0 to 3, 3 is most verbose. "
 			"Defaults to '0'.\n");
 		fprintf(stderr, "\n");
@@ -82,76 +84,100 @@ wouldn't mind switching to at least 120 character wide lines */
 int parse_args(int argc, char **argv)
 {
 	char c;
-	while ((c = getopt(argc, argv, "r:n:f:b:t:u:")) != -1) {
+	char* endptr;
+	while ((c = getopt(argc, argv, "r:n:f:b:t:o:u:h?")) != -1) {
 		switch (c) {
 		case 'r':
 			sample_rate = slogic_parse_sample_rate(optarg);
 			if (!sample_rate) {
 				usage("Invalid sample rate: %s", optarg);
-				return 1;
+				return 0;
 			}
 			break;
 		case 'f':
 			output_file_name = optarg;
 			break;
 		case 'n':
-			n_samples = strtol(optarg, NULL, 10);
-			if (n_samples <= 0) {
+			n_samples = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || n_samples <= 0) {
                                 usage("Invalid number of samples, must be a "
                                 "positive integer: %s",
 					     optarg);
-                                return 1;
+                                return 0;
 			}
 			break;
 		case 'b':
-			transfer_buffer_size = strtol(optarg, NULL, 10);
-			if (transfer_buffer_size <= 0) {
+			transfer_buffer_size = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || transfer_buffer_size <= 0) {
 				usage("Invalid transfer buffer size, "
 					     "must be a positive integer: %s",
 					     optarg);
-                                return 1;
+                                return 0;
 			}
 			break;
 		case 't':
-			n_transfer_buffers = strtol(optarg, NULL, 10);
-			if (n_transfer_buffers <= 0) {
+			n_transfer_buffers = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || n_transfer_buffers <= 0) {
 				usage("Invalid transfer buffer size, "
 					     "must be a positive integer: %s",
 					     optarg);
-                                return 1;
+                                return 0;
+			}
+			break;
+		case 'o':
+			transfer_timeout = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || transfer_timeout <= 0) {
+				usage("Invalid transfer timeout, "
+					     "must be a positive integer: %s",
+					     optarg);
+                                return 0;
 			}
 			break;
 		case 'u':
-			libusb_debug_level = strtol(optarg, NULL, 10);
-			if (libusb_debug_level < 0 || libusb_debug_level > 3) {
+			libusb_debug_level = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || libusb_debug_level < 0 || libusb_debug_level > 3) {
 				usage("Invalid libusb debug level, "
 					     "must be a positive integer between 0 and 3: %s",
 					     optarg);
-                                return 1;
+                                return 0;
 			}
 			break;
+		case 'h':
+			usage(NULL);
+                        return 0;
 		default:
 		case '?':
-			usage("Unknown argument: %c", optopt);
-                        return 1;
+			usage("Unknown argument: %c. Use %s -h for usage example.", optopt, me);
+                        return 0;
 		}
 	}
 
 	if (!output_file_name) {
 		usage("An output file has to be specified.", optarg);
-                return 1;
+                return 0;
 	}
 
 	if (!sample_rate) {
 		usage("A sample rate has to be specified.", optarg);
-                return 1;
+                return 0;
 	}
 
 	if (!n_samples) {
 		n_samples = sample_rate->samples_per_second;
 	}
 
-	return 0;
+	return 1;
+}
+
+int count = 0;
+int sum = 0;
+bool on_data_callback(uint8_t* data, size_t size, void* user_data)
+{
+	bool more = sum < 24 * 1024 * 1024;
+	fprintf(stderr, "Got sample: size: %zu, #samples: %d, aggregate size: %d, more: %d\n", size, count, sum, more);
+	count++;
+	sum += size;
+	return more;
 }
 
 int main(int argc, char **argv)
@@ -179,16 +205,32 @@ both in a reader+writer setup and as a 16-bit logic analyzer. */
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 
-	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers,
-		    libusb_debug_level);
+	slogic_tune(handle, stderr,
+			transfer_buffer_size,
+			n_transfer_buffers,
+			transfer_timeout,
+			libusb_debug_level);
 
 	uint8_t *buffer = malloc(n_samples);
 	assert(buffer);
 
-	printf("slogic_read_samples\n");
-	slogic_read_samples(handle, sample_rate, buffer, n_samples);
+	fprintf(stderr, "slogic_read_samples\n");
+
+	struct slogic_recording recording;
+
+	slogic_fill_recording(
+			&recording,
+			sample_rate,
+			on_data_callback,
+			NULL
+	);
+	recording.debug_file = stderr;
+
+	slogic_execute_recording(handle, &recording);
 
 	slogic_close(handle);
 
-	return EXIT_SUCCESS;
+	fprintf(stderr, "slogic_execute_recording: %d\n", recording.recording_state);
+
+	exit(EXIT_SUCCESS);
 }
