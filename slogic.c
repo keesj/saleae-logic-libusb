@@ -259,7 +259,7 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	struct slogic_recording *recording = internal_recording->recording;
 	assert(stransfer);
 
-	if (internal_recording->recording->recording_state != RUNNING) {
+	if (internal_recording->done) {
 		/*
 		 * This will happen if there was more incoming transfers when the
 		 * callback wanted to stop recording. The outer method will handle
@@ -304,6 +304,8 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	}
 
 	internal_recording->done = true;
+
+	fprintf(internal_recording->recording->debug_file, "Transfer failed: %s\n", libusb_transfer_status_to_string(transfer->status));
 
 	switch (transfer->status) {
 	default:
@@ -389,6 +391,9 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 		}
 	}
 
+	recording->recording_state = RUNNING;
+	internal_recording->done = false;
+
 	/* Switch the logic to streaming read mode */
 	/* KEJO: pause as in delay between samples.. */
 	fprintf(recording->debug_file, "pause=%d\n", recording->sample_rate->pause);
@@ -426,7 +431,7 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	}
 
 	if (internal_recording->recording->recording_state != COMPLETED_SUCCESSFULLY) {
-		fprintf(recording->debug_file, "FAIL!\n");
+		fprintf(recording->debug_file, "FAIL! recording_state=%d\n", internal_recording->recording->recording_state);
 	} else {
 		fprintf(recording->debug_file, "SUCCESS!\n");
 	}
@@ -434,11 +439,13 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	fprintf(recording->debug_file, "Total number of samples read: %i\n", internal_recording->sample_count);
 	fprintf(recording->debug_file, "Total number of transfers: %i\n", internal_recording->transfer_counter);
 
-	fprintf(recording->debug_file, "Time elapsed: %ds %dus\n", (int)start.tv_sec, (int)start.tv_usec);
-	fprintf(recording->debug_file, "Time elapsed: %ds %dus\n", (int)end.tv_sec, (int)end.tv_usec);
 	int sec = end.tv_sec - start.tv_sec;
 	int usec = (end.tv_usec - start.tv_usec) / 1000;
-	fprintf(recording->debug_file, "Time elapsed: %ds %dms\n", sec, usec);
+	if(usec < 0) {
+		sec--;
+		usec = 1 - usec;
+	}
+	fprintf(recording->debug_file, "Time elapsed: %d.%03ds\n", sec, usec);
 
 	free_internal_recording(internal_recording);
 }
