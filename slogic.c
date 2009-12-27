@@ -439,8 +439,6 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	fprintf(recording->debug_file, "Total number of samples read: %i\n", internal_recording->sample_count);
 	fprintf(recording->debug_file, "Total number of transfers: %i\n", internal_recording->transfer_counter);
 
-	fprintf(recording->debug_file, "Time elapsed: %ds %dus\n", (int)start.tv_sec, (int)start.tv_usec);
-	fprintf(recording->debug_file, "Time elapsed: %ds %dus\n", (int)end.tv_sec, (int)end.tv_usec);
 	int sec = end.tv_sec - start.tv_sec;
 	int usec = (end.tv_usec - start.tv_usec) / 1000;
 	if(usec < 0) {
