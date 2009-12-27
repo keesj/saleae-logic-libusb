@@ -2,3 +2,9 @@ o When starting up and the device is connected, reset it somehow. If stuff
   fails the next run will fail with a timeout. - Trygve
 
 o Add a ctrl-c handler which shuts down all transfers and closes libusb. - Trygve
+
+o Create a .a/.so in addition to the main programs.
+o Create a .so implementation of LogicInterface.h so that other can link
+  against our implementation.
+o Create a deb/set of deb files and publish them so that people can 
+o Publish API documentation.
