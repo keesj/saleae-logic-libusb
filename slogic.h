@@ -21,7 +21,9 @@ enum slogic_recording_state {
 	UNKNOWN = 100,
 };
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size);
+/* returns an array of available sample rates. The array is terminates with an entry having a
+0 sample_delay , a NULL text and a 0 samples_per_second */
+struct slogic_sample_rate *slogic_get_sample_rates();
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 
 /*

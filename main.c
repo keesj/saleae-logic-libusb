@@ -36,11 +36,7 @@ void short_usage(const char *message, ...)
 
 void full_usage()
 {
-	int i;
-	struct slogic_sample_rate *sample_rates;
-	size_t n_sample_rates;
-
-	slogic_available_sample_rates(&sample_rates, &n_sample_rates);
+	const struct slogic_sample_rate  * sample_iterator = slogic_get_sample_rates();
 
 	fprintf(stderr, "usage: %s -f <output file> -r <sample rate> [-n <number of samples>]\n", me);
 	fprintf(stderr, "\n");
@@ -50,8 +46,9 @@ void full_usage()
 	fprintf(stderr, " -h: This help message.\n");
 	fprintf(stderr, " -r: Select sample rate for the Logic.\n");
 	fprintf(stderr, "     Available sample rates:\n");
-	for (i = 0; i < n_sample_rates; i++, sample_rates++) {
-		fprintf(stderr, "      o %s\n", sample_rates->text);
+	while (sample_iterator->text != NULL){
+		fprintf(stderr, "      o %s\n", sample_iterator->text);
+		sample_iterator++;
 	}
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Advanced options:\n");

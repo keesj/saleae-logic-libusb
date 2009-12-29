@@ -26,16 +26,6 @@
 #define USB_VENDOR_ID 0x0925
 #define USB_PRODUCT_ID 0x3881
 
-struct slogic_handle {
-	/* pointer to the usb handle */
-	libusb_device_handle *device_handle;
-	libusb_context *context;
-	size_t transfer_buffer_size;
-	int n_transfer_buffers;
-	unsigned int transfer_timeout;
-	FILE *debug_file;
-};
-
 /*
  * Sample Rates
  */
@@ -50,27 +40,34 @@ struct slogic_sample_rate sample_rates[] = {
 	{95, "500kHz", 500000},
 	{191, "250kHz", 250000},
 	{239, "200kHz", 200000},
+	{0,NULL,0},
 };
 
-static const int n_sample_rates = sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
+struct slogic_handle {
+	/* pointer to the usb handle */
+	libusb_device_handle *device_handle;
+	libusb_context *context;
+	size_t transfer_buffer_size;
+	int n_transfer_buffers;
+	unsigned int transfer_timeout;
+	FILE *debug_file;
+};
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size)
+
+struct slogic_sample_rate *slogic_get_sample_rates()
 {
-	*sample_rates_out = sample_rates;
-	*size = n_sample_rates;
+	return sample_rates;
 }
 
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str)
 {
-	int i;
-
-	for (i = 0; i < n_sample_rates; i++) {
-		struct slogic_sample_rate *sample_rate = &sample_rates[i];
+	struct slogic_sample_rate *sample_rate = slogic_get_sample_rates();
+	while (sample_rate->text != NULL){
+		sample_rate++;
 		if (strcmp(sample_rate->text, str) == 0) {
 			return sample_rate;
 		}
 	}
-
 	return NULL;
 }
 
