@@ -40,7 +40,7 @@ struct slogic_sample_rate sample_rates[] = {
 	{95, "500kHz", 500000},
 	{191, "250kHz", 250000},
 	{239, "200kHz", 200000},
-	{0,NULL,0},
+	{0, NULL, 0},
 };
 
 struct slogic_handle {
@@ -53,7 +53,6 @@ struct slogic_handle {
 	FILE *debug_file;
 };
 
-
 struct slogic_sample_rate *slogic_get_sample_rates()
 {
 	return sample_rates;
@@ -62,7 +61,7 @@ struct slogic_sample_rate *slogic_get_sample_rates()
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str)
 {
 	struct slogic_sample_rate *sample_rate = slogic_get_sample_rates();
-	while (sample_rate->text != NULL){
+	while (sample_rate->text != NULL) {
 		sample_rate++;
 		if (strcmp(sample_rate->text, str) == 0) {
 			return sample_rate;

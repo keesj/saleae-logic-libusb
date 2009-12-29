@@ -8,7 +8,7 @@
 
 struct slogic_sample_rate {
 	const uint8_t sample_delay;	/* sample rates are translated into sampling delays */
-	const char *text;	        /* A descriptive text for the sample rate ("24MHz") */
+	const char *text;	/* A descriptive text for the sample rate ("24MHz") */
 	const unsigned int samples_per_second;
 };
 
