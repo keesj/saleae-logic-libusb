@@ -395,10 +395,8 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	recording->recording_state = RUNNING;
 	internal_recording->done = false;
 
-	/* Switch the logic to streaming read mode */
-	/* KEJO: pause as in delay between samples.. */
-	fprintf(recording->debug_file, "pause=%d\n", recording->sample_rate->pause);
-	unsigned char command[] = { 0x01, recording->sample_rate->pause };
+	fprintf(recording->debug_file, "sample_delay=%d\n", recording->sample_rate->sample_delay);
+	unsigned char command[] = { 0x01, recording->sample_rate->sample_delay };
 	int transferred;
 	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, command, 2, &transferred, 100);
 	if (ret) {
