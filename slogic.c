@@ -77,7 +77,6 @@ struct slogic_sample_rate *slogic_parse_sample_rate(const char *str)
 /*
  * Open / Close
  */
-
 void slogic_upload_firmware(struct slogic_handle *handle)
 {
 	int counter;
@@ -155,7 +154,6 @@ void slogic_tune(struct slogic_handle *handle, FILE * debug_file, size_t transfe
 	assert(handle);
 
 	/* TODO: Add validation that these values are sane. If not, don't modify but return an error. */
-
 	if (debug_file) {
 		handle->debug_file = debug_file;
 	}

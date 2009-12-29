@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 /* Command line arguments */
-
 struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
 size_t n_samples = 0;
@@ -21,7 +20,6 @@ size_t n_transfer_buffers = 0;
 size_t libusb_debug_level = 0;
 unsigned int transfer_timeout = 0;
 
-/* */
 const char *me = "main";
 
 void short_usage(const char *message, ...)
@@ -164,17 +162,6 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-/* KEJO: the slogic_open should not perform the firmware uploading
-the hanlding should still be here */
-/* Trygve: Why? It would be a pain for every user to have to handle
-the uploading of the firmware.  To be able to use the rest of the
-API (which basically are the sampling methods) you would need a
-(compatible) firmware to be uploaded before usage. */
-
-/* does firmware upload work for you? I guess not. to upload the
-firmware we need to connmect to an other VENDOR/PRODUCT. it really
-deserves special hanling also because we currently fail to first
-upload and continue */
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 

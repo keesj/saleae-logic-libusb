@@ -7,8 +7,8 @@
 #include <stdio.h>
 
 struct slogic_sample_rate {
-	const uint8_t sample_delay;	/* sample rates are translated into delays */
-	const char *text;	/* A descriptive text for the sample rate ("24MHz") */
+	const uint8_t sample_delay;	/* sample rates are translated into sampling delays */
+	const char *text;	        /* A descriptive text for the sample rate ("24MHz") */
 	const unsigned int samples_per_second;
 };
 
@@ -21,32 +21,7 @@ enum slogic_recording_state {
 	UNKNOWN = 100,
 };
 
-/*
- * I would really dump the tow method bellow, it not "critical" to the
- * lib so just drop it to put it somewhere in the main.c - KEJO
- *
- * These are reusable utility methods which I think it not a part of
- * the "core" api, but something that a many consumers of a library
- * would like to use so I'd like to keep them. - Trygve
- *
- * The problem here is that some it gets hard to hardcode a sample
- * rate you need to iterate over the sample rates of use what you call
- * a utility method. - KEJO
- *
- * How about adding this:
- *
- * struct slogic_sample_rate *slogic_get_sample_rate(unsigned int samples_per_second);
- *
- * That way you could go like this in your code to get a sample reate
- * of 1MHz:
- *
- * slogic_get_sample_rate(1000000);
- *
- * - Trygve
- */
-
 void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size);
-
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 
 /*
