@@ -54,7 +54,7 @@ struct slogic_sample_rate sample_rates[] = {
 
 static const int n_sample_rates = sizeof(sample_rates) / sizeof(struct slogic_sample_rate);
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t *size)
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size)
 {
 	*sample_rates_out = sample_rates;
 	*size = n_sample_rates;
@@ -149,7 +149,7 @@ void slogic_close(struct slogic_handle *handle)
 	free(handle);
 }
 
-void slogic_tune(struct slogic_handle *handle, FILE *debug_file, size_t transfer_buffer_size,
+void slogic_tune(struct slogic_handle *handle, FILE * debug_file, size_t transfer_buffer_size,
 		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level)
 {
 	assert(handle);
@@ -305,7 +305,8 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 
 	internal_recording->done = true;
 
-	fprintf(internal_recording->recording->debug_file, "Transfer failed: %s\n", libusb_transfer_status_to_string(transfer->status));
+	fprintf(internal_recording->recording->debug_file, "Transfer failed: %s\n",
+		libusb_transfer_status_to_string(transfer->status));
 
 	switch (transfer->status) {
 	default:
@@ -431,7 +432,8 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	}
 
 	if (internal_recording->recording->recording_state != COMPLETED_SUCCESSFULLY) {
-		fprintf(recording->debug_file, "FAIL! recording_state=%d\n", internal_recording->recording->recording_state);
+		fprintf(recording->debug_file, "FAIL! recording_state=%d\n",
+			internal_recording->recording->recording_state);
 	} else {
 		fprintf(recording->debug_file, "SUCCESS!\n");
 	}
@@ -441,7 +443,7 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 
 	int sec = end.tv_sec - start.tv_sec;
 	int usec = (end.tv_usec - start.tv_usec) / 1000;
-	if(usec < 0) {
+	if (usec < 0) {
 		sec--;
 		usec = 1 - usec;
 	}

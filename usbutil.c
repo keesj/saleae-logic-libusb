@@ -7,7 +7,7 @@
  * Data structure debugging.
  */
 
-static void dump_endpoint_descriptor(FILE *file, int i, const struct libusb_endpoint_descriptor *endpoint_descriptor)
+static void dump_endpoint_descriptor(FILE * file, int i, const struct libusb_endpoint_descriptor *endpoint_descriptor)
 {
 	char *direction = ((endpoint_descriptor->bEndpointAddress & 0x80) == LIBUSB_ENDPOINT_IN) ? "in" : "out";
 
@@ -20,7 +20,7 @@ static void dump_endpoint_descriptor(FILE *file, int i, const struct libusb_endp
 	fprintf(file, "      Sync address: %d\n", endpoint_descriptor->bSynchAddress);
 }
 
-static void dump_interface(FILE *file, int i, const struct libusb_interface *interface)
+static void dump_interface(FILE * file, int i, const struct libusb_interface *interface)
 {
 	fprintf(file, "  Interface #%d: Descriptors: (%d)\n", i, interface->num_altsetting);
 	const struct libusb_interface_descriptor *interface_descriptor = interface->altsetting;
@@ -39,7 +39,7 @@ static void dump_interface(FILE *file, int i, const struct libusb_interface *int
 	}
 }
 
-void usbutil_dump_config_descriptor(FILE *file, struct libusb_config_descriptor *config_descriptor)
+void usbutil_dump_config_descriptor(FILE * file, struct libusb_config_descriptor *config_descriptor)
 {
 	/* TODO: Decode bytes to strings */
 	fprintf(file, "Configuration descriptor:\n");
@@ -53,7 +53,7 @@ void usbutil_dump_config_descriptor(FILE *file, struct libusb_config_descriptor 
 	}
 }
 
-void usbutil_dump_device_descriptor(FILE *file, struct libusb_device_descriptor *device_descriptor)
+void usbutil_dump_device_descriptor(FILE * file, struct libusb_device_descriptor *device_descriptor)
 {
 	/* TODO: Decode bytes to strings */
 	fprintf(file, "Device descriptor:\n");
@@ -72,7 +72,7 @@ void usbutil_dump_device_descriptor(FILE *file, struct libusb_device_descriptor 
 /*
  * This method looks if the kernel already has a driver attached to the device. if so I will take over the device.
  */
-static enum libusb_error claim_device(libusb_device_handle *dev, int interface)
+static enum libusb_error claim_device(libusb_device_handle * dev, int interface)
 {
 	enum libusb_error err;
 	if (libusb_kernel_driver_active(dev, interface)) {
@@ -109,7 +109,7 @@ static enum libusb_error claim_device(libusb_device_handle *dev, int interface)
  * Iterates over the usb devices on the usb busses and returns a handle to the
  * first device found that matches the predefined vendor and product id
  */
-libusb_device_handle *open_device(libusb_context *ctx, int vendor_id, int product_id)
+libusb_device_handle *open_device(libusb_context * ctx, int vendor_id, int product_id)
 {
 	// discover devices
 	libusb_device **list;

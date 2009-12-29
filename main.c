@@ -117,7 +117,7 @@ bool parse_args(int argc, char **argv)
 			libusb_debug_level = strtol(optarg, &endptr, 10);
 			if (*endptr != '\0' || libusb_debug_level < 0 || libusb_debug_level > 3) {
 				short_usage("Invalid libusb debug level, must be a positive integer between "
-						"0 and 3: %s", optarg);
+					    "0 and 3: %s", optarg);
 				return false;
 			}
 			break;
@@ -147,7 +147,7 @@ bool parse_args(int argc, char **argv)
 
 int count = 0;
 int sum = 0;
-bool on_data_callback(uint8_t *data, size_t size, void *user_data)
+bool on_data_callback(uint8_t * data, size_t size, void *user_data)
 {
 	bool more = sum < 24 * 1024 * 1024;
 	fprintf(stderr, "Got sample: size: %zu, #samples: %d, aggregate size: %d, more: %d\n", size, count, sum, more);

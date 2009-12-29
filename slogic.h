@@ -45,7 +45,7 @@ enum slogic_recording_state {
  * - Trygve
  */
 
-void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t *size);
+void slogic_available_sample_rates(struct slogic_sample_rate **sample_rates_out, size_t * size);
 
 struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 
@@ -66,13 +66,13 @@ void slogic_close(struct slogic_handle *handle);
  * struct slogic_tunable with a set of unions for each tunable.
  */
 void slogic_tune(struct slogic_handle *handle,
-		 FILE *debug_file,
+		 FILE * debug_file,
 		 size_t transfer_buffer_size,
 		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level);
 
 int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
 
-typedef bool(*slogic_on_data_callback) (uint8_t *data, size_t size, void *user_data);
+typedef bool(*slogic_on_data_callback) (uint8_t * data, size_t size, void *user_data);
 
 struct slogic_recording {
 	struct slogic_sample_rate *sample_rate;
