@@ -89,7 +89,7 @@ void slogic_upload_firmware(struct slogic_handle *handle)
 }
 
 /* return 1 if the firmware is uploaded 0 if not */
-static bool slogic_is_firmware_uploaded(struct slogic_handle *handle)
+bool slogic_is_firmware_uploaded(struct slogic_handle *handle)
 {
 	/* just try to perform a normal read, if this fails we assume the firmware is not uploaded */
 	unsigned char out_byte = 0x05;
@@ -103,7 +103,7 @@ static bool slogic_is_firmware_uploaded(struct slogic_handle *handle)
  * to why open() fails. The handle should probably be an argument passed as
  * a pointer to a pointer.
  */
-struct slogic_handle *slogic_open()
+struct slogic_handle *slogic_init()
 {
 	struct slogic_handle *handle = malloc(sizeof(struct slogic_handle));
 	assert(handle);
@@ -114,21 +114,17 @@ struct slogic_handle *slogic_open()
 
 	libusb_init(&handle->context);
 
-	libusb_set_debug(handle->context, 3);
+	return handle;
+}
 
+int slogic_open(struct slogic_handle *handle)
+{
 	handle->device_handle = open_device(handle->context, USB_VENDOR_ID, USB_PRODUCT_ID);
 	if (!handle->device_handle) {
-		return NULL;
+		log_printf(&logger, ERR, "Failed to open the device\n");
+		return -1;
 	}
-	if (!slogic_is_firmware_uploaded(handle)) {
-		log_printf(&logger, INFO, "Uploading the firmware\n");
-		slogic_upload_firmware(handle);
-		libusb_close(handle->device_handle);
-		libusb_exit(handle->context);
-		return NULL;
-	}
-
-	return handle;
+	return 0;
 }
 
 void slogic_close(struct slogic_handle *handle)
@@ -136,26 +132,6 @@ void slogic_close(struct slogic_handle *handle)
 	libusb_close(handle->device_handle);
 	libusb_exit(handle->context);
 	free(handle);
-}
-
-void slogic_tune(struct slogic_handle *handle, size_t transfer_buffer_size,
-		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level)
-{
-	assert(handle);
-
-	if (transfer_buffer_size) {
-		handle->transfer_buffer_size = transfer_buffer_size;
-	}
-
-	if (n_transfer_buffers) {
-		handle->n_transfer_buffers = n_transfer_buffers;
-	}
-
-	if (transfer_timeout) {
-		handle->transfer_timeout = transfer_timeout;
-	}
-
-	libusb_set_debug(handle->context, libusb_debug_level);
 }
 
 int slogic_readbyte(struct slogic_handle *handle, unsigned char *out)

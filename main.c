@@ -160,15 +160,26 @@ int main(int argc, char **argv)
 {
 	struct slogic_recording recording;
 
-	struct slogic_handle *handle = slogic_open();
+	struct slogic_handle *handle = slogic_init();
 	if (!handle) {
-		log_printf(&logger, INFO, "Failed to open the analyzer in analyzer mode\n");
+		log_printf(&logger, INFO, "Failed initialise lib slogic\n");
 		exit(42);
 	}
 
-	/* I am not to happy that we first perform the slogic_open above but I don't want to use an extra indirection here */
 	if (!parse_args(argc, argv, handle)) {
 		exit(EXIT_FAILURE);
+	}
+
+	if (slogic_open(handle) != 0) {
+		log_printf(&logger, INFO, "Failed to open the logic analyzer\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (!slogic_is_firmware_uploaded(handle)) {
+		log_printf(&logger, INFO, "Uploading the firmware\n");
+		slogic_upload_firmware(handle);
+		slogic_close(handle);
+		return 42;
 	}
 
 	slogic_fill_recording(&recording, sample_rate, on_data_callback, NULL);

@@ -39,8 +39,13 @@ struct slogic_handle {
 	unsigned int transfer_timeout;
 };
 
-struct slogic_handle *slogic_open();
+struct slogic_handle *slogic_init();
+int slogic_open(struct slogic_handle *handle);
+
 void slogic_close(struct slogic_handle *handle);
+
+bool slogic_is_firmware_uploaded(struct slogic_handle *handle);
+void slogic_upload_firmware(struct slogic_handle *handle);
 
 int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
 
