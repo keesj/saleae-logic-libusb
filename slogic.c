@@ -306,7 +306,7 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	internal_recording->done = true;
 
 	fprintf(internal_recording->recording->debug_file, "Transfer failed: %s\n",
-		libusb_transfer_status_to_string(transfer->status));
+		usbutil_transfer_status_to_string(transfer->status));
 
 	switch (transfer->status) {
 	default:

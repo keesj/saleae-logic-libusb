@@ -184,7 +184,7 @@ libusb_device_handle *open_device(libusb_context * ctx, int vendor_id, int produ
 	return device_handle;
 }
 
-const char *libusb_transfer_status_to_string(enum libusb_transfer_status transfer_status)
+const char *usbutil_transfer_status_to_string(enum libusb_transfer_status transfer_status)
 {
 	switch (transfer_status) {
 	case LIBUSB_TRANSFER_COMPLETED:

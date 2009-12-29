@@ -7,7 +7,6 @@
  */
 libusb_device_handle *open_device(libusb_context * ctx, int vendor_id, int product_id);
 
-const char *libusb_transfer_status_to_string(enum libusb_transfer_status transfer_status);
+const char *usbutil_transfer_status_to_string(enum libusb_transfer_status transfer_status);
 
-/* TODO: Rename to libusb_error_to_string() */
 const char *usbutil_error_to_string(enum libusb_error error);
