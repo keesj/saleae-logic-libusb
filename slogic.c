@@ -2,6 +2,7 @@
 #include "firmware/firmware.h"
 #include "slogic.h"
 #include "usbutil.h"
+#include "log.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -25,6 +26,11 @@
 /* Bus 006 Device 006: ID 0925:3881 Lakeview Research */
 #define USB_VENDOR_ID 0x0925
 #define USB_PRODUCT_ID 0x3881
+
+static struct logger logger = {
+	.name = __FILE__,
+	.verbose = 0,
+};
 
 /*
  * Sample Rates
@@ -62,17 +68,14 @@ struct slogic_sample_rate *slogic_parse_sample_rate(const char *str)
 {
 	struct slogic_sample_rate *sample_rate = slogic_get_sample_rates();
 	while (sample_rate->text != NULL) {
-		sample_rate++;
 		if (strcmp(sample_rate->text, str) == 0) {
 			return sample_rate;
 		}
+		sample_rate++;
 	}
 	return NULL;
 }
 
-/*
- * Open / Close
- */
 void slogic_upload_firmware(struct slogic_handle *handle)
 {
 	int counter;
@@ -128,6 +131,7 @@ struct slogic_handle *slogic_open()
 		return NULL;
 	}
 	if (!slogic_is_firmware_uploaded(handle)) {
+		log_printf(&logger, INFO, "Uploading the firmware\n");
 		slogic_upload_firmware(handle);
 		libusb_close(handle->device_handle);
 		libusb_exit(handle->context);
@@ -177,13 +181,13 @@ int slogic_readbyte(struct slogic_handle *handle, unsigned char *out)
 
 	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, &command, 1, &transferred, 100);
 	if (ret) {
-		fprintf(handle->debug_file, "libusb_bulk_transfer (out): %s\n", usbutil_error_to_string(ret));
+		log_printf(&logger, ERR, "libusb_bulk_transfer (out): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 
 	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_IN_ENDPOINT, out, 1, &transferred, 100);
 	if (ret) {
-		fprintf(handle->debug_file, "libusb_bulk_transfer (in): %s\n", usbutil_error_to_string(ret));
+		log_printf(&logger, ERR, "libusb_bulk_transfer (in): %s\n", usbutil_error_to_string(ret));
 		return ret;
 	}
 	return 0;
@@ -277,7 +281,7 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 		if (!more) {
 			internal_recording->recording->recording_state = COMPLETED_SUCCESSFULLY;
 			internal_recording->done = true;
-			fprintf(internal_recording->recording->debug_file, "Callback signalled completion\n");
+			log_printf(&logger, DEBUG, "Callback signalled completion\n");
 			return;
 		}
 
@@ -285,22 +289,19 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 		stransfer->seq = tcounter++;
 		int ret = libusb_submit_transfer(stransfer->transfer);
 		if (ret) {
-			fprintf(internal_recording->recording->debug_file, "libusb_submit_transfer: %s\n",
-				usbutil_error_to_string(ret));
+			log_printf(&logger, ERR, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 			internal_recording->recording->recording_state = UNKNOWN;
 			internal_recording->done = true;
 			return;
 		}
 
-		fprintf(internal_recording->recording->debug_file, "Rescheduled transfer %d as %d\n", old_seq,
-			stransfer->seq);
+		log_printf(&logger, DEBUG, "Rescheduled transfer %d as %d\n", old_seq, stransfer->seq);
 		return;
 	}
 
 	internal_recording->done = true;
 
-	fprintf(internal_recording->recording->debug_file, "Transfer failed: %s\n",
-		usbutil_transfer_status_to_string(transfer->status));
+	log_printf(&logger, ERR, "Transfer failed: %s\n", usbutil_transfer_status_to_string(transfer->status));
 
 	switch (transfer->status) {
 	default:
@@ -350,10 +351,10 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	 *  - Trygve
 	 */
 
-	fprintf(recording->debug_file, "Starting recording...\n");
-	fprintf(recording->debug_file, "Transfer buffers:     %d\n", internal_recording->n_transfer_buffers);
-	fprintf(recording->debug_file, "Transfer buffer size: %zu\n", handle->transfer_buffer_size);
-	fprintf(recording->debug_file, "Transfer timeout:     %u\n", handle->transfer_timeout);
+	log_printf(&logger, DEBUG, "Starting recording...\n");
+	log_printf(&logger, DEBUG, "Transfer buffers:     %d\n", internal_recording->n_transfer_buffers);
+	log_printf(&logger, DEBUG, "Transfer buffer size: %zu\n", handle->transfer_buffer_size);
+	log_printf(&logger, DEBUG, "Transfer timeout:     %u\n", handle->transfer_timeout);
 
 	/* Pre-allocate transfers */
 	for (counter = 0; counter < internal_recording->n_transfer_buffers; counter++) {
@@ -362,7 +363,7 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 
 		transfer = libusb_alloc_transfer(0);
 		if (transfer == NULL) {
-			fprintf(recording->debug_file, "libusb_alloc_transfer failed\n");
+			log_printf(&logger, ERR, "libusb_alloc_transfer failed\n");
 			recording->recording_state = UNKNOWN;
 			return;
 		}
@@ -380,7 +381,7 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 		internal_recording->transfers[counter].seq = tcounter++;
 		ret = libusb_submit_transfer(internal_recording->transfers[counter].transfer);
 		if (ret) {
-			fprintf(recording->debug_file, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
+			log_printf(&logger, ERR, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 			recording->recording_state = UNKNOWN;
 			return;
 		}
@@ -389,13 +390,13 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	recording->recording_state = RUNNING;
 	internal_recording->done = false;
 
-	fprintf(recording->debug_file, "sample_delay=%d\n", recording->sample_rate->sample_delay);
+	log_printf(&logger, DEBUG, "sample_delay=%d\n", recording->sample_rate->sample_delay);
 	unsigned char command[] = { 0x01, recording->sample_rate->sample_delay };
 	int transferred;
 	ret = libusb_bulk_transfer(handle->device_handle, COMMAND_OUT_ENDPOINT, command, 2, &transferred, 100);
 	if (ret) {
-		fprintf(recording->debug_file, "libusb_bulk_transfer (set streaming read mode): %s\n",
-			usbutil_error_to_string(ret));
+		log_printf(&logger, ERR, "libusb_bulk_transfer (set streaming read mode): %s\n",
+			   usbutil_error_to_string(ret));
 		recording->recording_state = UNKNOWN;
 		return;
 	}
@@ -406,10 +407,10 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 
 	struct timeval timeout = { 1, 0 };
 	while (!internal_recording->done) {
-		fprintf(recording->debug_file, "Processing events...\n");
+		log_printf(&logger, DEBUG, "Processing events...\n");
 		ret = libusb_handle_events_timeout(handle->context, &timeout);
 		if (ret) {
-			fprintf(recording->debug_file, "libusb_handle_events: %s\n", usbutil_error_to_string(ret));
+			log_printf(&logger, ERR, "libusb_handle_events: %s\n", usbutil_error_to_string(ret));
 			break;
 		}
 	}
@@ -424,14 +425,13 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	}
 
 	if (internal_recording->recording->recording_state != COMPLETED_SUCCESSFULLY) {
-		fprintf(recording->debug_file, "FAIL! recording_state=%d\n",
-			internal_recording->recording->recording_state);
+		log_printf(&logger, ERR, "FAIL! recording_state=%d\n", internal_recording->recording->recording_state);
 	} else {
-		fprintf(recording->debug_file, "SUCCESS!\n");
+		log_printf(&logger, DEBUG, "SUCCESS!\n");
 	}
 
-	fprintf(recording->debug_file, "Total number of samples read: %i\n", internal_recording->sample_count);
-	fprintf(recording->debug_file, "Total number of transfers: %i\n", internal_recording->transfer_counter);
+	log_printf(&logger, DEBUG, "Total number of samples read: %i\n", internal_recording->sample_count);
+	log_printf(&logger, DEBUG, "Total number of transfers: %i\n", internal_recording->transfer_counter);
 
 	int sec = end.tv_sec - start.tv_sec;
 	int usec = (end.tv_usec - start.tv_usec) / 1000;
@@ -439,7 +439,7 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 		sec--;
 		usec = 1 - usec;
 	}
-	fprintf(recording->debug_file, "Time elapsed: %d.%03ds\n", sec, usec);
+	log_printf(&logger, DEBUG, "Time elapsed: %d.%03ds\n", sec, usec);
 
 	free_internal_recording(internal_recording);
 }

@@ -1,6 +1,7 @@
 // vim: sw=8:ts=8:noexpandtab
 #include "slogic.h"
 #include "usbutil.h"
+#include "log.h"
 
 #include <assert.h>
 #include <libusb.h>
@@ -21,6 +22,11 @@ size_t libusb_debug_level = 0;
 unsigned int transfer_timeout = 0;
 
 const char *me = "main";
+
+static struct logger logger = {
+	.name = __FILE__,
+	.verbose = 0,
+};
 
 void short_usage(const char *message, ...)
 {
@@ -145,7 +151,8 @@ int sum = 0;
 bool on_data_callback(uint8_t * data, size_t size, void *user_data)
 {
 	bool more = sum < 24 * 1024 * 1024;
-	fprintf(stderr, "Got sample: size: %zu, #samples: %d, aggregate size: %d, more: %d\n", size, count, sum, more);
+	log_printf(&logger, DEBUG, "Got sample: size: %zu, #samples: %d, aggregate size: %d, more: %d\n", size, count,
+		   sum, more);
 	count++;
 	sum += size;
 	return more;
