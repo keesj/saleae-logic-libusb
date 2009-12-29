@@ -56,7 +56,6 @@ struct slogic_handle {
 	size_t transfer_buffer_size;
 	int n_transfer_buffers;
 	unsigned int transfer_timeout;
-	FILE *debug_file;
 };
 
 struct slogic_sample_rate *slogic_get_sample_rates()
@@ -148,15 +147,10 @@ void slogic_close(struct slogic_handle *handle)
 	free(handle);
 }
 
-void slogic_tune(struct slogic_handle *handle, FILE * debug_file, size_t transfer_buffer_size,
+void slogic_tune(struct slogic_handle *handle, size_t transfer_buffer_size,
 		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level)
 {
 	assert(handle);
-
-	/* TODO: Add validation that these values are sane. If not, don't modify but return an error. */
-	if (debug_file) {
-		handle->debug_file = debug_file;
-	}
 
 	if (transfer_buffer_size) {
 		handle->transfer_buffer_size = transfer_buffer_size;

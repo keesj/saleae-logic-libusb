@@ -43,7 +43,6 @@ void slogic_close(struct slogic_handle *handle);
  * struct slogic_tunable with a set of unions for each tunable.
  */
 void slogic_tune(struct slogic_handle *handle,
-		 FILE * debug_file,
 		 size_t transfer_buffer_size,
 		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level);
 
@@ -57,7 +56,6 @@ struct slogic_recording {
 	/* Updated by slogic when returning from the recording */
 	enum slogic_recording_state recording_state;
 	void *user_data;
-	FILE *debug_file;
 };
 
 /*

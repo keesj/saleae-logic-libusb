@@ -169,11 +169,9 @@ int main(int argc, char **argv)
 	struct slogic_handle *handle = slogic_open();
 	assert(handle);
 
-	slogic_tune(handle, stderr, transfer_buffer_size, n_transfer_buffers, transfer_timeout, libusb_debug_level);
+	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers, transfer_timeout, libusb_debug_level);
 
 	slogic_fill_recording(&recording, sample_rate, on_data_callback, NULL);
-	recording.debug_file = stderr;
-
 	slogic_execute_recording(handle, &recording);
 
 	slogic_close(handle);
