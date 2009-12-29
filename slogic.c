@@ -49,15 +49,6 @@ struct slogic_sample_rate sample_rates[] = {
 	{0, NULL, 0},
 };
 
-struct slogic_handle {
-	/* pointer to the usb handle */
-	libusb_device_handle *device_handle;
-	libusb_context *context;
-	size_t transfer_buffer_size;
-	int n_transfer_buffers;
-	unsigned int transfer_timeout;
-};
-
 struct slogic_sample_rate *slogic_get_sample_rates()
 {
 	return sample_rates;

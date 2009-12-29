@@ -29,22 +29,18 @@ struct slogic_sample_rate *slogic_parse_sample_rate(const char *str);
 /*
  * Contract between the main program and the utility library
  */
-struct slogic_handle;
+struct slogic_handle {
+	/* pointer to the usb handle */
+	libusb_device_handle *device_handle;
+	libusb_context *context;
+	/* TODO add doc about when we can change these values */
+	size_t transfer_buffer_size;
+	int n_transfer_buffers;
+	unsigned int transfer_timeout;
+};
 
 struct slogic_handle *slogic_open();
 void slogic_close(struct slogic_handle *handle);
-
-/*
- * TODO: Should tune have a signature like this instead:
- *
- *     slogic_tune(enum slogic_tunable, void* value)?
- *
- * It would definitely be more future proof. Another option is
- * struct slogic_tunable with a set of unions for each tunable.
- */
-void slogic_tune(struct slogic_handle *handle,
-		 size_t transfer_buffer_size,
-		 unsigned int n_transfer_buffers, unsigned int transfer_timeout, int libusb_debug_level);
 
 int slogic_readbyte(struct slogic_handle *handle, unsigned char *out);
 

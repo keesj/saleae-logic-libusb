@@ -16,10 +16,6 @@
 struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
 size_t n_samples = 0;
-size_t transfer_buffer_size = 0;
-size_t n_transfer_buffers = 0;
-size_t libusb_debug_level = 0;
-unsigned int transfer_timeout = 0;
 
 const char *me = "main";
 
@@ -66,9 +62,10 @@ void full_usage()
 }
 
 /* Returns true if everything was OK */
-bool parse_args(int argc, char **argv)
+bool parse_args(int argc, char **argv, struct slogic_handle *handle)
 {
 	char c;
+	int libusb_debug_level = 0;
 	char *endptr;
 	/* TODO: Add a -d flag to turn on internal debugging */
 	while ((c = getopt(argc, argv, "n:f:r:hb:t:o:u:")) != -1) {
@@ -94,22 +91,22 @@ bool parse_args(int argc, char **argv)
 			full_usage();
 			return false;
 		case 'b':
-			transfer_buffer_size = strtol(optarg, &endptr, 10);
-			if (*endptr != '\0' || transfer_buffer_size <= 0) {
+			handle->transfer_buffer_size = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || handle->transfer_buffer_size <= 0) {
 				short_usage("Invalid transfer buffer size, must be a positive integer: %s", optarg);
 				return false;
 			}
 			break;
 		case 't':
-			n_transfer_buffers = strtol(optarg, &endptr, 10);
-			if (*endptr != '\0' || n_transfer_buffers <= 0) {
+			handle->n_transfer_buffers = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || handle->n_transfer_buffers <= 0) {
 				short_usage("Invalid transfer buffer count, must be a positive integer: %s", optarg);
 				return false;
 			}
 			break;
 		case 'o':
-			transfer_timeout = strtol(optarg, &endptr, 10);
-			if (*endptr != '\0' || transfer_timeout <= 0) {
+			handle->transfer_timeout = strtol(optarg, &endptr, 10);
+			if (*endptr != '\0' || handle->transfer_timeout <= 0) {
 				short_usage("Invalid transfer timeout, must be a positive integer: %s", optarg);
 				return false;
 			}
@@ -121,6 +118,7 @@ bool parse_args(int argc, char **argv)
 					    "0 and 3: %s", optarg);
 				return false;
 			}
+			libusb_set_debug(handle->context, libusb_debug_level);
 			break;
 		default:
 		case '?':
@@ -162,14 +160,16 @@ int main(int argc, char **argv)
 {
 	struct slogic_recording recording;
 
-	if (!parse_args(argc, argv)) {
-		exit(EXIT_FAILURE);
+	struct slogic_handle *handle = slogic_open();
+	if (!handle) {
+		log_printf(&logger, INFO, "Failed to open the analyzer in analyzer mode\n");
+		exit(42);
 	}
 
-	struct slogic_handle *handle = slogic_open();
-	assert(handle);
-
-	slogic_tune(handle, transfer_buffer_size, n_transfer_buffers, transfer_timeout, libusb_debug_level);
+	/* I am not to happy that we first perform the slogic_open above but I don't want to use an extra indirection here */
+	if (!parse_args(argc, argv, handle)) {
+		exit(EXIT_FAILURE);
+	}
 
 	slogic_fill_recording(&recording, sample_rate, on_data_callback, NULL);
 	slogic_execute_recording(handle, &recording);
