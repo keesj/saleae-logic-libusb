@@ -149,10 +149,17 @@ int sum = 0;
 bool on_data_callback(uint8_t * data, size_t size, void *user_data)
 {
 	bool more = sum < 24 * 1024 * 1024;
+	if (size == 0){
+		more = 0;
+	}
 	log_printf(&logger, DEBUG, "Got sample: size: %zu, #samples: %d, aggregate size: %d, more: %d\n", size, count,
 		   sum, more);
 	count++;
 	sum += size;
+	if (size == 0){
+		printf("logic level buffer overun\n");
+		exit(EXIT_FAILURE);
+	}
 	return more;
 }
 

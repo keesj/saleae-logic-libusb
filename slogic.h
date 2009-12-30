@@ -13,7 +13,8 @@ struct slogic_sample_rate {
 };
 
 enum slogic_recording_state {
-	RUNNING = 0,
+	WARMING_UP = 0,
+	RUNNING = 1,
 	COMPLETED_SUCCESSFULLY = 1,
 	DEVICE_GONE = 2,
 	TIMEOUT = 3,
