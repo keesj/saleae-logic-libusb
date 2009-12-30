@@ -26,7 +26,7 @@ new_log
 add_entry "counter,speed,buffer_count,timeout,buffer_size,cmd,sucess,success_1"
 new_entry
 COUNTER=0
-for buffer_count in `seq 2 2 20`
+for buffer_count in `seq 2 4`
 do 
 	for speed in  `echo $speeds`
 	do
@@ -42,12 +42,14 @@ do
 				add_entry $buffer_size
 				cmd="./main -f out.log -r $speed -t $buffer_count -o $timeout -b $buffer_size"
 				add_entry "\"$cmd\""
-				echo $COUNTER $cmd
+				echo -n $COUNTER $cmd
 				if ($cmd 2>&1 )  > /dev/null
 				then
+					echo " OK"
 					add_entry OK
 					add_entry 1
 				else
+					echo " NOK"
 					add_entry NOK
 					add_entry 0
 				fi
