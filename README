@@ -1,12 +1,10 @@
-The code here represents a libusb based implementation to access the saleae logic analyzer. 
+The code here is a libusb based implementation to access the saleae logic analyzer. 
+You can find more information about the logic analyzer on the following website
+http://www.saleae.com/logic/. 
+
+The analyzer is capable of sampling at 24MHz but that doesn't work on all machines yet
 
 Implemented features
 -firmware upload
 -readbyte
-
-http://www.saleae.com/logic/
-
-
-TODO:
-Look at using the "new libusb" to allow better control and a-synchronous operations
-http://libusb.wiki.sourceforge.net/Libusb1.0
+-streaming data out
