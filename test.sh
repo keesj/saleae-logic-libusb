@@ -1,10 +1,8 @@
 #!/bin/sh
-#set -e 
-#set -x 
 
-speeds="24MHz 16MHz 12MHz 8MHz 4MHz 2MHz 1MHz 500kHz 250kHz 200kHz"
-timeouts="10 20 40 80 100 200"
-buffer_sizes="512 1024 2048 4096 8192 16384 32768 65536 131072 262144 524288"
+speeds="24MHz 16MHz 8MHz"
+timeouts="10 20 40"
+buffer_sizes="65536 131072 262144 524288"
 
 LOG=log.csv
 
@@ -26,7 +24,7 @@ new_log
 add_entry "counter,speed,buffer_count,timeout,buffer_size,cmd,sucess,success_1"
 new_entry
 COUNTER=0
-for buffer_count in `seq 2 4`
+for buffer_count in  4
 do 
 	for speed in  `echo $speeds`
 	do
