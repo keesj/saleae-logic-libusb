@@ -190,7 +190,10 @@ int main(int argc, char **argv)
 	}
 
 	slogic_fill_recording(&recording, sample_rate, on_data_callback, NULL);
-	slogic_execute_recording(handle, &recording);
+	if (slogic_execute_recording(handle, &recording)) {
+		slogic_close(handle);
+		exit(EXIT_FAILURE);
+	}
 
 	slogic_close(handle);
 

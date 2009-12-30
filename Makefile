@@ -16,7 +16,7 @@ INDENT ?= indent
 all: main
 
 run: main
-	./main -f out.log -r 8MHz
+	./main -f out.log -r 16MHz
 
 main: main.o slogic.o firmware/firmware.o usbutil.o log.o
 

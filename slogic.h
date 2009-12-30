@@ -72,6 +72,7 @@ static inline void slogic_fill_recording(struct slogic_recording *recording,
 	recording->user_data = user_data;
 }
 
-void slogic_execute_recording(struct slogic_handle *handle, struct slogic_recording *recording);
+/* return 0 on success */
+int slogic_execute_recording(struct slogic_handle *handle, struct slogic_recording *recording);
 
 #endif

@@ -269,7 +269,7 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 		return;
 	}
 	
-	if (internal_recording->transfer_counter == 5) {
+	if (internal_recording->transfer_counter == 200) {
 			struct libusb_transfer *transfer;
 			unsigned char command[] = { 0x01, recording->sample_rate->sample_delay };
 			transfer = libusb_alloc_transfer(0 /* we use bulk */ );
@@ -280,9 +280,10 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 			libusb_submit_transfer(transfer);
 	}
 	if (transfer->status == LIBUSB_TRANSFER_TIMED_OUT) {
-		slogic_transfer->internal_recording->timeout_counter++;
+		if (recording->recording_state == RUNNING){
+			slogic_transfer->internal_recording->timeout_counter++;
+		}
 		if (internal_recording->timeout_counter < 1000){
-			int old_seq = slogic_transfer->seq;
 			slogic_transfer->seq = tcounter++;
 			int ret = libusb_submit_transfer(slogic_transfer->transfer);
 			if (ret) {
@@ -326,9 +327,10 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 	}
 }
 
-void slogic_execute_recording(struct slogic_handle *handle, struct slogic_recording *recording)
+int slogic_execute_recording(struct slogic_handle *handle, struct slogic_recording *recording)
 {
 	/* TODO: validate recording */
+	int retval =0;
 
 	struct libusb_transfer *transfer;
 	unsigned char *buffer;
@@ -360,7 +362,8 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 		if (transfer == NULL) {
 			log_printf(&logger, ERR, "libusb_alloc_transfer failed\n");
 			recording->recording_state = UNKNOWN;
-			return;
+			retval = 1;
+			return retval;
 		}
 		libusb_fill_bulk_transfer(transfer, handle->device_handle,
 					  STREAMING_DATA_IN_ENDPOINT, buffer,
@@ -381,7 +384,8 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 		if (ret) {
 			log_printf(&logger, ERR, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 			recording->recording_state = UNKNOWN;
-			return;
+			retval =1;
+			return retval;
 		}
 	}
 
@@ -410,6 +414,7 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 
 	if (internal_recording->recording->recording_state != COMPLETED_SUCCESSFULLY) {
 		log_printf(&logger, ERR, "FAIL! recording_state=%d\n", internal_recording->recording->recording_state);
+		retval =1;
 	} else {
 		log_printf(&logger, DEBUG, "SUCCESS!\n");
 	}
@@ -426,4 +431,5 @@ void slogic_execute_recording(struct slogic_handle *handle, struct slogic_record
 	log_printf(&logger, DEBUG, "Time elapsed: %d.%03ds\n", sec, usec);
 
 	free_internal_recording(internal_recording);
+	return retval;
 }
