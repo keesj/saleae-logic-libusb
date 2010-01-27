@@ -209,7 +209,7 @@ static void free_internal_recording(struct slogic_internal_recording *internal_r
 void slogic_read_samples_callback_start_log(struct libusb_transfer *transfer)
 {
 	struct slogic_recording *recording = transfer->user_data;
-	printf("start log\n");
+	log_printf(&logger, DEBUG, "start log\n");
 	recording->recording_state = RUNNING;
 	libusb_free_transfer(transfer);
 	/* free data? */
@@ -268,22 +268,22 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 		log_printf(&logger, DEBUG, "Rescheduled transfer %d as %d\n", old_seq, slogic_transfer->seq);
 		return;
 	}
-	
+
 	if (internal_recording->transfer_counter == 200) {
-			struct libusb_transfer *transfer;
-			unsigned char command[] = { 0x01, recording->sample_rate->sample_delay };
-			transfer = libusb_alloc_transfer(0 /* we use bulk */ );
-			assert(transfer);
-			libusb_fill_bulk_transfer(transfer,
-						  internal_recording->shandle->device_handle, 0x01,
-						  command, 2, slogic_read_samples_callback_start_log, recording, 40);
-			libusb_submit_transfer(transfer);
+		struct libusb_transfer *transfer;
+		unsigned char command[] = { 0x01, recording->sample_rate->sample_delay };
+		transfer = libusb_alloc_transfer(0 /* we use bulk */ );
+		assert(transfer);
+		libusb_fill_bulk_transfer(transfer,
+					  internal_recording->shandle->device_handle, 0x01,
+					  command, 2, slogic_read_samples_callback_start_log, recording, 40);
+		libusb_submit_transfer(transfer);
 	}
 	if (transfer->status == LIBUSB_TRANSFER_TIMED_OUT) {
-		if (recording->recording_state == RUNNING){
+		if (recording->recording_state == RUNNING) {
 			slogic_transfer->internal_recording->timeout_counter++;
 		}
-		if (internal_recording->timeout_counter < 1000){
+		if (internal_recording->timeout_counter < 1000) {
 			slogic_transfer->seq = tcounter++;
 			int ret = libusb_submit_transfer(slogic_transfer->transfer);
 			if (ret) {
@@ -330,7 +330,7 @@ void slogic_read_samples_callback(struct libusb_transfer *transfer)
 int slogic_execute_recording(struct slogic_handle *handle, struct slogic_recording *recording)
 {
 	/* TODO: validate recording */
-	int retval =0;
+	int retval = 0;
 
 	struct libusb_transfer *transfer;
 	unsigned char *buffer;
@@ -384,7 +384,7 @@ int slogic_execute_recording(struct slogic_handle *handle, struct slogic_recordi
 		if (ret) {
 			log_printf(&logger, ERR, "libusb_submit_transfer: %s\n", usbutil_error_to_string(ret));
 			recording->recording_state = UNKNOWN;
-			retval =1;
+			retval = 1;
 			return retval;
 		}
 	}
@@ -414,7 +414,7 @@ int slogic_execute_recording(struct slogic_handle *handle, struct slogic_recordi
 
 	if (internal_recording->recording->recording_state != COMPLETED_SUCCESSFULLY) {
 		log_printf(&logger, ERR, "FAIL! recording_state=%d\n", internal_recording->recording->recording_state);
-		retval =1;
+		retval = 1;
 	} else {
 		log_printf(&logger, DEBUG, "SUCCESS!\n");
 	}
