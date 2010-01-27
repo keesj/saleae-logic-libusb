@@ -15,6 +15,7 @@
 /* Command line arguments */
 struct slogic_sample_rate *sample_rate = NULL;
 const char *output_file_name = NULL;
+FILE *output_file;
 size_t n_samples = 0;
 
 const char *me = "main";
@@ -149,14 +150,27 @@ int sum = 0;
 bool on_data_callback(uint8_t * data, size_t size, void *user_data)
 {
 	bool more = sum < 24 * 1024 * 1024;
-	if (size == 0){
+	size_t bytes_written = 0;
+	size_t n;
+
+	if (size == 0) {
 		more = 0;
 	}
 	log_printf(&logger, DEBUG, "Got sample: size: %zu, #samples: %d, aggregate size: %d, more: %d\n", size, count,
 		   sum, more);
+	do {
+		log_printf(&logger, DEBUG, "%i %i\n", bytes_written, n);
+		n = fwrite(&data[bytes_written], sizeof(char), size - bytes_written, output_file);
+		if (n <= 0) {
+			log_printf(&logger, WARNING, "Error while writing data to the file %s", output_file_name);
+			break;
+		}
+		bytes_written += n;
+	} while (bytes_written != size);
+
 	count++;
 	sum += size;
-	if (size == 0){
+	if (size == 0) {
 		printf("logic level buffer overun\n");
 		exit(EXIT_FAILURE);
 	}
@@ -189,6 +203,20 @@ int main(int argc, char **argv)
 		return 42;
 	}
 
+	if (output_file_name) {
+		if (output_file_name[0] == '-') {
+			log_printf(&logger, DEBUG, "Using stdout\n");
+			output_file = stdout;
+		} else {
+			output_file = fopen(output_file_name, "w");
+			if (!output_file) {
+				perror("opening output file");
+				exit(EXIT_FAILURE);
+			}
+
+		}
+
+	}
 	slogic_fill_recording(&recording, sample_rate, on_data_callback, NULL);
 	if (slogic_execute_recording(handle, &recording)) {
 		slogic_close(handle);
