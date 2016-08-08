@@ -1,11 +1,14 @@
-#Rules for the Saleae Logic analyzer to allow to run the programs a normal user
-#being part of the plugdev group. Simply copy the file to /etc/udev/rules.d/
-#and plug the device
+# Rules for the Saleae Logic analyzer to allow to run the programs a normal user
+# being part of the plugdev group. Simply copy the file to /etc/udev/rules.d/
+# and plug the device
+
 BUS!="usb", ACTION!="add", SUBSYSTEM!=="usb_device", GOTO="saleae_logic_rules_end"
 
 # Saleae Logic analyzer (USB Based)
 # Bus 006 Device 006: ID 0925:3881 Lakeview Research
-SYSFS{idVendor}=="0925", SYSFS{idProduct}=="3881", MODE="664", GROUP="plugdev"
+# Bus 001 Device 009: ID 21a9:1004 Product: Logic S/16, Manufacturer: Saleae LLC
+
+ATTR{idVendor}=="0925", ATTR{idProduct}=="3881", MODE="664", GROUP="plugdev"
+ATTR{idVendor}=="21a9", ATTR{idProduct}=="1004", MODE="664", GROUP="plugdev"
 
 LABEL="saleae_logic_rules_end"
-
