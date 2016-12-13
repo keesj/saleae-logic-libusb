@@ -65,7 +65,7 @@ void full_usage()
 /* Returns true if everything was OK */
 bool parse_args(int argc, char **argv, struct slogic_handle *handle)
 {
-	char c;
+	int c;
 	int libusb_debug_level = 0;
 	char *endptr;
 	/* TODO: Add a -d flag to turn on internal debugging */
