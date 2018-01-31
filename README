@@ -8,3 +8,9 @@ Implemented features
 -firmware upload
 -readbyte
 -streaming data out
+
+
+If you just want to use the logic analyzer with open source tools have a look at 
+
+https://sigrok.org/wiki/Saleae_Logic and the 
+https://sigrok.org/wiki/Fx2lafw page 
